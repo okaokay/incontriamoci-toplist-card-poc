@@ -52,23 +52,40 @@
   transition: border-color 0.15s ease; /* morbido se il bordo colorato cambia via JS */
 }
 
-/* ---- 2.1) Header: nome/età/video/foto/prezzo (sx) + stato/TOPLIST/preferiti (dx) ---- */
+/* ---- 2.1) Header: nome/età/video/foto/prezzo (sx) + stato/TOPLIST/preferiti (dx) -----
+   MAI a capo, su nessuna larghezza (richiesta esplicita, era il problema
+   principale su tablet/iPad: i badge di stato "cadevano" su una seconda
+   riga). Invece di stringere font/gap fino a renderli illeggibili sulle
+   larghezze più strette, l'header è un'unica riga che SCORRE
+   orizzontalmente quando il contenuto non ci sta (flex-wrap:nowrap +
+   overflow-x:auto): tutti gli elementi restano sempre allineati sulla
+   stessa riga, con lo scroll come "valvola di sicurezza" invece del
+   wrapping. La scrollbar è nascosta (sotto) per non appesantire
+   visivamente l'header — resta comunque scorrevole con swipe/trackpad. */
 .toplist-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 12px;
   padding: 12px;
   background: #fff;
   border-bottom: 1px solid var(--toplist-border-light);
+  overflow-x: auto;
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* Edge legacy/IE */
+}
+
+.toplist-card__header::-webkit-scrollbar {
+  display: none;              /* Chrome/Safari/Edge Chromium */
 }
 
 .toplist-card__header-left {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 /* Nome inserzionista: primo elemento dell'header, il più prominente —
@@ -79,6 +96,7 @@
    (#FFADE2 + bordo nero 2px + radius 8px, presi da uno screenshot). */
 .toplist-card__name {
   display: inline-block;
+  flex-shrink: 0;
   background: #fe9bdd;
   border: 1px solid #77767b;
   border-radius: 2px;
@@ -89,6 +107,7 @@
 }
 
 .toplist-card__meta {
+  flex-shrink: 0;
   font-size: 16px;
   color: var(--toplist-text-muted);
   white-space: nowrap;
@@ -101,6 +120,7 @@
 }
 
 .toplist-card__price {
+  flex-shrink: 0;
   font-family: "Courier New", monospace; /* stand-in per JetBrains Mono (Figma), non incluso nel pacchetto per restare offline senza scaricare un intero webfont per 3 caratteri */
   font-weight: 700;
   letter-spacing: 1.2px;
@@ -111,8 +131,10 @@
 .toplist-card__header-right {
   display: flex;
   align-items: center;
-  gap: 32px;
-  flex-wrap: wrap;
+  gap: 32px; /* stesso gap del node Figma originale (Frame 35), non ridotto */
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  margin-left: auto; /* si "appoggia" a destra quando c'è spazio, come prima con justify-content:space-between */
 }
 
 /* ---- Badge di stato (ONLINE ORA / DISPONIBILE ORA / RISPONDO SUBITO) -----
@@ -127,13 +149,15 @@
 .toplist-card__status-badges {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 .toplist-badge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
+  flex-shrink: 0;
   padding: 2px 8px;
   border-radius: 9999px;
   font-size: 10px;
@@ -187,6 +211,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
 }
 
 /* Badge TOPLIST: stesso trattamento "chip rosa" del nome inserzionista e
@@ -197,6 +223,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
   background: #fe9bdd;
   border: 1px solid #77767b;
   border-radius: 2px;
@@ -215,6 +243,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   background: none;
   border: none;
   padding: 0;

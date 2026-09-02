@@ -349,6 +349,23 @@ nessun'altra parte del file legge l'array finto direttamente.
 - Nessuna dipendenza oltre jQuery: entrambi i file JS possono essere
   inclusi così come sono in `public/js/`.
 
+## Header della card: mai più a capo su tablet/mobile
+
+Segnalato dal cliente con uno screenshot da iPad Mini (768px): i badge di
+stato "cadevano" su una seconda riga sotto nome/età/video/foto/prezzo,
+raddoppiando l'altezza dell'header — visivamente sbagliato.
+
+**Fix**: l'header (`.toplist-card__header` in `style.css`) non va più a
+capo su NESSUNA larghezza. Invece di rimpicciolire font/gap fino a
+renderli illeggibili sulle larghezze più strette (soluzione fragile, si
+rompe di nuovo alla prima larghezza non testata), è un'unica riga che
+**scorre orizzontalmente** quando il contenuto non ci sta tutto
+(`flex-wrap: nowrap` + `overflow-x: auto` sull'header, `flex-shrink: 0`
+su tutti i suoi elementi diretti e i badge). La scrollbar è nascosta
+(resta comunque scorrevole con swipe/trackpad) per non appesantire
+visivamente l'header. Testato: altezza header identica su desktop,
+tablet (768px) e mobile (390px) — mai raddoppiata, mai andata a capo.
+
 ## Domande per il senior
 
 1. **Contratto delle 5 liste di dettaglio**: un endpoint dedicato per tipo
