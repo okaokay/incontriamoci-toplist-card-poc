@@ -52,7 +52,7 @@
   transition: border-color 0.15s ease; /* morbido se il bordo colorato cambia via JS */
 }
 
-/* ---- 2.1) Header: badge NEW/età/video/foto/prezzo (sx) + stato/TOPLIST/preferiti (dx) ---- */
+/* ---- 2.1) Header: nome/età/video/foto/prezzo (sx) + stato/TOPLIST/preferiti (dx) ---- */
 .toplist-card__header {
   display: flex;
   align-items: center;
@@ -71,21 +71,17 @@
   flex-wrap: wrap;
 }
 
-/* Nome inserzionista: primo elemento dell'header, il più prominente
-   (font-size maggiore degli altri metadati) — è il dato che identifica
-   l'annuncio, deve risaltare più di età/video/foto/prezzo. */
+/* Nome inserzionista: primo elemento dell'header, il più prominente —
+   "chip" rosa con bordo nero marcato (su richiesta esplicita, stesso
+   trattamento richiesto anche per il pulsante Chiama e il badge TOPLIST
+   qui sotto: sfondo #FFADE2, bordo nero 2px, angoli arrotondati). */
 .toplist-card__name {
+  display: inline-block;
+  background: #ffade2;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 4px 12px;
   font-size: 18px;
-  font-weight: 700;
-  color: var(--toplist-text);
-}
-
-.toplist-card__new-badge {
-  background: #eee;
-  border: 1px solid var(--toplist-border);
-  border-radius: 2px;
-  padding: 3px 9px;
-  font-size: 16px;
   font-weight: 700;
   color: #000;
 }
@@ -191,15 +187,20 @@
   gap: 16px;
 }
 
+/* Badge TOPLIST: stesso trattamento "chip rosa + bordo nero" richiesto per
+   nome inserzionista e pulsante Chiama — qui a forma di pillola (era già
+   un badge corto, coerente con gli altri badge di stato della card). */
 .toplist-card__toplist-flag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid var(--toplist-border);
-  border-radius: 2px;
-  padding: 3px 9px;
+  background: #ffade2;
+  border: 2px solid #000;
+  border-radius: 9999px;
+  padding: 3px 10px;
   font-size: 10px;
-  color: var(--toplist-text);
+  font-weight: 700;
+  color: #000;
 }
 
 /* Cuoricino preferiti: vuoto/outline di default, si tinge di rosa già al
@@ -389,15 +390,21 @@
   align-items: center;
   gap: 8px;
   padding: 9px 25px;
-  border-radius: 2px;
+  border-radius: 8px;
   border: 1px solid var(--toplist-border);
   font-size: 16px;
+  font-weight: 700;
   color: var(--toplist-text);
   cursor: pointer;
 }
 
+/* Pulsante Chiama: stesso trattamento "chip rosa + bordo nero" richiesto
+   per nome inserzionista e badge TOPLIST — coerenza visiva tra i 3
+   elementi "dato catturato in evidenza" della card. */
 .toplist-card__contact-button--call {
-  background: var(--toplist-bg);
+  background: #ffade2;
+  border: 2px solid #000;
+  color: #000;
 }
 
 /* Pulsante WhatsApp: stesso trattamento (verde brand + icona ufficiale)

@@ -113,38 +113,49 @@
      badge di stato diversi, ecc.) senza dover impostare nulla a mano.
 
      SCHEMA DATI — ogni campo qui sotto è un dato che in produzione arriva
-     dal database, NON testo statico scritto a mano: per ciascuno indico
-     la fonte Eloquent più plausibile, così il senior sa esattamente dove
-     agganciare la query reale (da confermare/correggere in base allo
-     schema reale, sono nomi plausibili non certificati):
+     dal database, NON testo statico scritto a mano. Per i campi raccolti
+     nel wizard di caricamento annuncio (doc, sezione 2) indico esattamente
+     step e sezione da cui arrivano — per gli altri, la fonte Eloquent più
+     plausibile (da confermare con chi conosce lo schema reale):
 
        - id            → listings.id (o listings.uuid)
-       - name          → users.display_name (o listings.nickname, se il
-                          nome pubblico è specifico dell'annuncio e non
-                          dell'account) — CAMPO AGGIUNTO DOPO la prima
+       - name          → campo "nome d'arte", Step 1 "Info Base" del wizard
+                          di caricamento annuncio (doc, sezione 2.1, node
+                          Figma 577:7224) — CAMPO AGGIUNTO DOPO la prima
                           versione della card, segnalato dal cliente come
                           dato mancante: senza, non si capisce DI CHI è
-                          l'annuncio. È un dato "catturato" (inserito
-                          dall'utente in fase di registrazione/pubblicazione),
-                          non decorativo, quindi va risolto con una query
-                          reale come tutti gli altri campi qui sotto — non
-                          basta scriverlo in pagina, va recuperato dal
-                          profilo/annuncio corretto.
-       - isNew         → listings.created_at (es. "creato negli ultimi 7 giorni")
-       - age           → users.birth_date (calcolata) o users.age se già salvata
+                          l'annuncio.
+       - age           → campo "età", Step 1 "Info Base" (sezione 2.1)
        - videoCount    → count di listing_media dove type = "video"
-       - photoCount    → count di listing_media dove type = "photo"
-       - priceTier     → listings.price_tier (enum "€"|"€€"|"€€€", o calcolato)
-       - title         → listings.title
-       - description   → listings.description
-       - photos[]      → listing_media (ordinate, la prima è quella con
-                          id = preview_media_id, sezione 6.3 della doc)
+                          (caricato nello Step 2 "Media & Tag", sezione 2.2)
+       - photoCount    → photos.length (vedi "photos" più sotto)
+       - costPerHour   → campo tag "prezzo/ora", Step 2 "Media & Tag"
+                          (doc, sezione 2.2) — la fascia "€"/"€€"/"€€€"
+                          mostrata sulla card NON è più un valore fisso:
+                          viene CALCOLATA da questo numero tramite
+                          getPriceTier() qui sotto, così la card riflette
+                          sempre il prezzo/ora vero inserito
+                          dall'inserzionista invece di un tag scollegato
+                          dal dato reale.
+       - title         → campo "titolo", Step 1 "Info Base" (sezione 2.1)
+       - description   → campo "descrizione", Step 1 "Info Base" (sezione 2.1)
+       - photos[]      → galleria caricata nello Step 2 "Media & Tag"
+                          (dropzone immagini, doc sezione 2.2) — qui è già
+                          un ARRAY (non solo un conteggio, vedi punto 2bis
+                          "PLACEHOLDER_PHOTOS" più sotto): in produzione
+                          ogni elemento avrà almeno {id, url}, ordinate con
+                          la prima = quella scelta come preview_media_id
+                          (doc, sezione 6.3). Il primo elemento con id
+                          uguale a preview_media_id va per primo.
        - stats         → COUNT delle relazioni listing→followers/reactions/
                           savedBy/reviews/donations (stesse relazioni già
                           documentate per le modali, vedi stat-detail-modal.js)
        - isToplist, isBordo, coloreBordo, isDisponibileSubito, isOnlineOra,
          isRispondoSubito → FUORI SCOPE qui (sola lettura): impostati dal
          futuro pannello opzioni "In risalto", vedi punto 1 sopra e README.
+
+     Il badge "NEW" della prima versione è stato RIMOSSO su richiesta
+     esplicita (non serviva) — non fa più parte dello schema dati.
 
      fetchListings() più sotto è l'UNICO punto che produce questi dati:
      oggi restituisce l'array finto, in produzione diventerà una vera
@@ -153,16 +164,44 @@
      (modali di questo stesso componente). Nessun altro punto del file
      legge MOCK_LISTINGS direttamente: così il senior deve toccare UNA
      funzione sola per collegare i dati veri, non cercarli sparsi nel file. */
+
+  /* --------------------------------------------------------------------
+     2bis) FASCIA PREZZO CALCOLATA DAL COSTO/ORA REALE
+     Sostituisce il vecchio campo fisso "priceTier": ora la card riceve
+     "costPerHour" (il dato realmente catturato, vedi sopra) e calcola da
+     sola quanti simboli "€" mostrare. Soglie di esempio, DA CONFERMARE
+     col cliente/senior — non sono valori ufficiali di business. */
+  function getPriceTier(costPerHour) {
+    if (costPerHour >= 150) {
+      return "€€€";
+    }
+    if (costPerHour >= 70) {
+      return "€€";
+    }
+    return "€";
+  }
+
+  /* Placeholder per l'array foto (vedi "photos[]" sopra): in questo POC
+     bastano oggetti minimi con un id, non avendo foto reali da mostrare
+     (il carosello, come già oggi, aggiorna solo il contatore "1/N" — vedi
+     bindCarouselEvents). In produzione ogni oggetto avrà anche "url". */
+  function buildPlaceholderPhotos(count) {
+    var photos = [];
+    for (var i = 1; i <= count; i++) {
+      photos.push({ id: "photo-" + i });
+    }
+    return photos;
+  }
+
   var MOCK_LISTINGS = [
     {
       id: "listing-1",
       name: "Sofia",
-      isNew: true,
       age: 24,
       videoCount: 1,
       photoCount: 12,
-      priceTier: "€€€",
-      photoTotal: 5,
+      costPerHour: 200,
+      photos: buildPlaceholderPhotos(5),
       title: "Titolo annuncio di esempio",
       description: "Descrizione breve dell'annuncio, mostrata nella card TopList. In produzione arriva dal campo \"descrizione\" dell'annuncio salvato dall'inserzionista durante il flusso di pubblicazione.",
       stats: { followers: 0, reactions: 0, saved: 0, reviews: 10, donations: 0 },
@@ -176,12 +215,11 @@
     {
       id: "listing-2",
       name: "Martina",
-      isNew: false,
       age: 29,
       videoCount: 0,
       photoCount: 8,
-      priceTier: "€€",
-      photoTotal: 3,
+      costPerHour: 90,
+      photos: buildPlaceholderPhotos(3),
       title: "Secondo annuncio di esempio",
       description: "Un secondo annuncio, senza bordo colorato e con un solo badge di stato attivo, per mostrare come la card si adatta quando non tutti i flag sono attivi.",
       stats: { followers: 5, reactions: 12, saved: 3, reviews: 2, donations: 4 },
@@ -195,12 +233,11 @@
     {
       id: "listing-3",
       name: "Giada",
-      isNew: false,
       age: 31,
       videoCount: 2,
       photoCount: 20,
-      priceTier: "€",
-      photoTotal: 8,
+      costPerHour: 40,
+      photos: buildPlaceholderPhotos(8),
       title: "Terzo annuncio, nessun badge attivo",
       description: "Terzo esempio: nessun toggle attivo nel pannello opzioni, quindi nessun badge di stato né bordo colorato — solo la card base con statistiche e pulsanti di contatto.",
       stats: { followers: 128, reactions: 47, saved: 19, reviews: 31, donations: 2 },
@@ -255,9 +292,9 @@
      4) HTML DI UNA SINGOLA CARD
      -------------------------------------------------------------------- */
   function buildCardHtml(listing) {
-    var newBadgeHtml = listing.isNew
-      ? '<span class="toplist-card__new-badge">NEW</span>'
-      : "";
+    /* Fascia prezzo calcolata dal costo/ora reale, non più un valore fisso
+       — vedi getPriceTier() e il commento sullo schema dati (punto 2). */
+    var priceTier = getPriceTier(listing.costPerHour);
 
     var borderStyle = "";
     if (listing.isBordo && listing.coloreBordo && BORDER_COLOR_PALETTE[listing.coloreBordo]) {
@@ -271,20 +308,20 @@
     return (
       '<div class="toplist-card" data-listing-id="' + listing.id + '"' + borderStyle + '>' +
 
-        /* ---- Header: nome inserzionista + badge NEW/età/video/foto/prezzo + badge di stato + TOPLIST/preferiti ----
-           Il nome è il PRIMO elemento, prima ancora del badge NEW: è il
-           dato più importante dell'header (senza, non si capisce di chi
-           è l'annuncio) — segnalato dal cliente, mancava nella prima
-           versione della card (il node Figma 409:4482 non lo includeva
-           nell'header, solo un placeholder di titolo nel corpo). */
+        /* ---- Header: nome inserzionista + età/video/foto/prezzo + badge di stato + TOPLIST/preferiti ----
+           Il nome è il PRIMO elemento: è il dato più importante
+           dell'header (senza, non si capisce di chi è l'annuncio) —
+           segnalato dal cliente, mancava nella prima versione della card
+           (il node Figma 409:4482 non lo includeva nell'header, solo un
+           placeholder di titolo nel corpo). Il badge "NEW" della prima
+           versione è stato rimosso su richiesta esplicita. */
         '<div class="toplist-card__header">' +
           '<div class="toplist-card__header-left">' +
             '<span class="toplist-card__name">' + listing.name + "</span>" +
-            newBadgeHtml +
             '<span class="toplist-card__meta">Età: ' + listing.age + "</span>" +
             '<span class="toplist-card__meta toplist-card__meta--icon">' + ICON_VIDEO + "<span>" + listing.videoCount + "</span></span>" +
             '<span class="toplist-card__meta toplist-card__meta--icon">' + ICON_PHOTO + "<span>" + listing.photoCount + "</span></span>" +
-            '<span class="toplist-card__price">' + listing.priceTier + "</span>" +
+            '<span class="toplist-card__price">' + priceTier + "</span>" +
           "</div>" +
           '<div class="toplist-card__header-right">' +
             '<div class="toplist-card__status-badges">' + buildStatusBadgesHtml(listing) + "</div>" +
@@ -308,7 +345,7 @@
             '<div class="toplist-card__photo-placeholder"></div>' +
             '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--prev" aria-label="Foto precedente">' + ICON_ARROW_LEFT + "</button>" +
             '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--next" aria-label="Foto successiva">' + ICON_ARROW_RIGHT + "</button>" +
-            '<span class="toplist-card__photo-counter">1/' + listing.photoTotal + "</span>" +
+            '<span class="toplist-card__photo-counter">1/' + listing.photos.length + "</span>" +
           "</div>" +
           '<a href="#" class="toplist-card__body">' +
             '<h3 class="toplist-card__title">' + listing.title + "</h3>" +

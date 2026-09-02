@@ -50,7 +50,8 @@ incontriamoci-toplist-card-poc/
 
 ## Cosa fa il componente
 
-- **Card TopList**: badge "NEW", età, contatore video/foto, fascia prezzo,
+- **Card TopList**: nome inserzionista, età, contatore video/foto, fascia
+  prezzo (calcolata dal costo/ora reale, vedi sezione dedicata più sotto),
   badge di stato dinamici (ONLINE ORA / DISPONIBILE ORA / RISPONDO SUBITO,
   mostrati solo se il relativo flag è attivo), stella "TOPLIST" + cuore
   preferiti, carosello foto con frecce e contatore posizione, titolo e
@@ -146,6 +147,60 @@ richiesta esplicita è stato sostituito con un pulsante **WhatsApp** —
 stessa icona ufficiale e stesso verde brand (`#25d366`) già usati nel
 pulsante WhatsApp del componente slider vetrine, per coerenza visiva tra i
 due componenti del sito.
+
+## Badge "NEW" rimosso, fascia prezzo collegata al costo/ora reale
+
+Due modifiche legate ai dati "catturati" nel wizard di caricamento
+annuncio (doc, sezione 2):
+
+- **Badge "NEW"**: rimosso su richiesta esplicita — non serviva. Non fa
+  più parte né del markup né dello schema dati.
+- **Fascia prezzo (€/€€/€€€)**: prima era un valore fisso scritto a mano
+  per ciascun annuncio finto; ora è **calcolata** da `costPerHour`, il
+  dato realmente catturato nel form (campo tag "prezzo/ora", Step 2 "Media
+  & Tag" del wizard, doc sezione 2.2) tramite la funzione `getPriceTier()`
+  in `toplist-card.js`. Le soglie usate (`>= 150 → €€€`, `>= 70 → €€`,
+  altrimenti `€`) sono un esempio ragionevole, **non valori di business
+  ufficiali** — vanno confermate con cliente/senior prima di andare in
+  produzione (vedi "Domande per il senior").
+
+## Nome, Chiama e badge TOPLIST — stile "chip catturato" (rosa + bordo nero)
+
+Su richiesta esplicita, questi tre elementi condividono ora lo stesso
+trattamento visivo — sfondo rosa `#FFADE2`, bordo nero 2px, angoli
+arrotondati, testo in grassetto — per segnalare visivamente che si tratta
+di **dati catturati durante il caricamento dell'annuncio**, non di
+elementi puramente decorativi della UI:
+
+- **Nome inserzionista** (`.toplist-card__name` in `style.css`)
+- **Pulsante Chiama** (`.toplist-card__contact-button--call`)
+- **Badge TOPLIST** (`.toplist-card__toplist-flag`, qui a forma di pillola
+  perché era già un badge corto)
+
+Il pulsante WhatsApp resta verde brand (invariato, vedi sezione sopra):
+il trattamento rosa+bordo nero è specifico solo per questi 3 elementi.
+
+## Titolo, descrizione e foto — anche questi sono campi da agganciare
+
+Erano già presenti come campi della card (non sono stati aggiunti ora),
+ma vale la pena renderlo esplicito: **non sono testo statico**, sono dati
+catturati durante il wizard di caricamento annuncio, esattamente come il
+nome e il costo/ora discussi sopra:
+
+- `title` e `description` → campi "titolo" e "descrizione", **Step 1 "Info
+  Base"** del wizard (doc, sezione 2.1, node Figma `577:7224`).
+- `photos[]` → galleria caricata nello **Step 2 "Media & Tag"** (doc,
+  sezione 2.2, dropzone immagini) — con questa modifica è diventato un
+  VERO array (`buildPlaceholderPhotos()` in `toplist-card.js`), non solo
+  un numero per il contatore del carosello come prima: in produzione ogni
+  elemento avrà almeno `{id, url}`, pronti per essere iniettati al posto
+  dei placeholder. Il primo elemento deve essere quello con
+  `id === preview_media_id` (doc, sezione 6.3, foto scelta come
+  anteprima).
+
+Tutti e tre passano già da `fetchListings()` (vedi sezione dedicata più
+sotto): il senior non deve cercare questi campi altrove nel file, basta
+popolarli lì con i dati reali.
 
 ## Testi footer statistiche — allineati al node Figma 516:9277
 
@@ -333,3 +388,8 @@ nessun'altra parte del file legge l'array finto direttamente.
    `POST /api/annunci/:id/reazioni` con il tipo scelto) e la gestione di
    "un utente può cambiare/togliere la propria reazione" o solo aggiungerne
    una nuova.
+10. **Soglie fascia prezzo**: le soglie usate da `getPriceTier()` (`€€€`
+    da 150/ora, `€€` da 70/ora, altrimenti `€`) sono un esempio ragionevole
+    scelto per riprodurre visivamente le 3 fasce già presenti nei dati
+    finti precedenti — non sono valori di business ufficiali, vanno
+    confermati (o resi configurabili lato server) prima di produzione.
