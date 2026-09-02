@@ -36,9 +36,18 @@
     '<svg viewBox="0 0 10 9.5" width="10" height="10" fill="currentColor" aria-hidden="true">' +
     '<path d="M5 0L6.53333 3.10833L10 3.63333L7.5 6.03333L8.08333 9.5L5 7.85833L1.91667 9.5L2.5 6.03333L0 3.63333L3.46667 3.10833L5 0Z"/>' +
     "</svg>";
-  var ICON_HEART =
-    '<svg viewBox="0 0 16.6667 15.2917" width="16" height="15" fill="currentColor" aria-hidden="true">' +
-    '<path d="M8.33333 15.2917L7.125 14.2083C5.72222 12.9444 4.5625 11.8542 3.64583 10.9375C2.72917 10.0208 2 9.19792 1.45833 8.46875C0.916667 7.73958 0.538194 7.06944 0.322917 6.45833C0.107639 5.84722 0 5.22222 0 4.58333C0 3.27778 0.4375 2.1875 1.3125 1.3125C2.1875 0.4375 3.27778 0 4.58333 0C5.30556 0 5.99306 0.152778 6.64583 0.458333C7.29861 0.763889 7.86111 1.19444 8.33333 1.75C8.80556 1.19444 9.36806 0.763889 10.0208 0.458333C10.6736 0.152778 11.3611 0 12.0833 0C13.3889 0 14.4792 0.4375 15.3542 1.3125C16.2292 2.1875 16.6667 3.27778 16.6667 4.58333C16.6667 5.22222 16.559 5.84722 16.3438 6.45833C16.1285 7.06944 15.75 7.73958 15.2083 8.46875C14.6667 9.19792 13.9375 10.0208 13.0208 10.9375C12.1042 11.8542 10.9444 12.9444 9.54167 14.2083L8.33333 15.2917Z"/>' +
+  /* Cuoricino "preferiti": DUE varianti Font Awesome Free 6.7.2 ufficiali
+     (non un'unica forma riusata con solo "fill" diverso, perché il
+     contorno vuoto e quello pieno hanno path DIVERSI, non sono la stessa
+     forma con outline vs riempimento) — vedi buildFavoriteIconHtml() più
+     sotto per come vengono scambiate al click. */
+  var ICON_HEART_OUTLINE = /* Font Awesome "heart" (regular) */
+    '<svg viewBox="0 0 512 512" width="16" height="15" fill="currentColor" aria-hidden="true">' +
+    '<path d="M225.8 468.2l-2.5-2.3L48.1 303.2C17.4 274.7 0 234.7 0 192.8l0-3.3c0-70.4 50-130.8 119.2-144C158.6 37.9 198.9 47 231 69.6c9 6.4 17.4 13.8 25 22.3c4.2-4.8 8.7-9.2 13.5-13.3c3.7-3.2 7.5-6.2 11.5-9c0 0 0 0 0 0C313.1 47 353.4 37.9 392.8 45.4C462 58.6 512 119.1 512 189.5l0 3.3c0 41.9-17.4 81.9-48.1 110.4L288.7 465.9l-2.5 2.3c-8.2 7.6-19 11.9-30.2 11.9s-22-4.2-30.2-11.9zM239.1 145c-.4-.3-.7-.7-1-1.1l-17.8-20-.1-.1s0 0 0 0c-23.1-25.9-58-37.7-92-31.2C81.6 101.5 48 142.1 48 189.5l0 3.3c0 28.5 11.9 55.8 32.8 75.2L256 430.7 431.2 268c20.9-19.4 32.8-46.7 32.8-75.2l0-3.3c0-47.3-33.6-88-80.1-96.9c-34-6.5-69 5.4-92 31.2c0 0 0 0-.1 .1s0 0-.1 .1l-17.8 20c-.3 .4-.7 .7-1 1.1c-4.5 4.5-10.6 7-16.9 7s-12.4-2.5-16.9-7z"/>' +
+    "</svg>";
+  var ICON_HEART_SOLID = /* Font Awesome "heart" (solid) */
+    '<svg viewBox="0 0 512 512" width="16" height="15" fill="currentColor" aria-hidden="true">' +
+    '<path d="M47.6 300.4L228.3 469.1c7.5 7 17.4 10.9 27.7 10.9s20.2-3.9 27.7-10.9L464.4 300.4c30.4-28.3 47.6-68 47.6-109.5v-5.8c0-69.9-50.5-129.5-119.4-141C347 36.5 300.6 51.4 268 84L256 96 244 84c-32.6-32.6-79-47.5-124.6-39.9C50.5 55.6 0 115.2 0 185.1v5.8c0 41.5 17.2 81.2 47.6 109.5z"/>' +
     "</svg>";
   var ICON_ARROW_LEFT =
     '<svg viewBox="0 0 320 512" width="10" height="14" fill="currentColor" aria-hidden="true">' +
@@ -230,7 +239,12 @@
               (listing.isToplist
                 ? '<span class="toplist-card__toplist-flag">' + ICON_STAR + "<span>TOPLIST</span></span>"
                 : "") +
-              '<button type="button" class="toplist-card__favorite" aria-label="Aggiungi ai preferiti">' + ICON_HEART + "</button>" +
+              /* Cuoricino preferiti: parte sempre vuoto/outline (non
+                 leggiamo un flag "isFavorite" dai dati finti, perché è lo
+                 stato di preferenza DELL'UTENTE che guarda la pagina in
+                 quel momento, non un dato dell'annuncio — vedi
+                 bindFavoriteEvents più sotto per la logica del toggle). */
+              '<button type="button" class="toplist-card__favorite" aria-label="Aggiungi ai preferiti" aria-pressed="false">' + ICON_HEART_OUTLINE + "</button>" +
             "</div>" +
           "</div>" +
         "</div>" +
@@ -252,21 +266,25 @@
         /* ---- Footer: 5 contatori cliccabili (aprono le modali) + pulsanti Chiama/WhatsApp ---- */
         '<div class="toplist-card__footer">' +
           '<div class="toplist-card__stats">' +
+            /* Etichette in italiano, testo IDENTICO a quello del node Figma
+               516:9277 (mostrato dal cliente): "Follower" non "Followers",
+               ecc. — prima erano rimaste in inglese per errore quando erano
+               state aggiornate solo le icone, non i testi. */
             '<button type="button" class="toplist-card__stat" data-stat-type="followers">' +
               '<span class="toplist-card__stat-value">' + ICON_FOLLOWERS + "<b>" + listing.stats.followers + "</b></span>" +
-              '<span class="toplist-card__stat-label">Followers</span>' +
+              '<span class="toplist-card__stat-label">Follower</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="reactions">' +
               '<span class="toplist-card__stat-value toplist-card__stat-value--emoji">' + ICON_REACTIONS_EMOJI + "<b>" + listing.stats.reactions + "</b></span>" +
-              '<span class="toplist-card__stat-label">Reactions</span>' +
+              '<span class="toplist-card__stat-label">Reazioni</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="saved">' +
               '<span class="toplist-card__stat-value">' + ICON_SAVED + "<b>" + listing.stats.saved + "</b></span>" +
-              '<span class="toplist-card__stat-label">Saved</span>' +
+              '<span class="toplist-card__stat-label">Preferiti</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="reviews">' +
               '<span class="toplist-card__stat-value">' + ICON_REVIEWS_OUTLINE + "<b>" + listing.stats.reviews + "</b></span>" +
-              '<span class="toplist-card__stat-label">Reviews</span>' +
+              '<span class="toplist-card__stat-label">Recensioni</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="donations">' +
               '<span class="toplist-card__stat-value">' + ICON_DONATIONS + "<b>" + listing.stats.donations + "</b></span>" +
@@ -327,6 +345,28 @@
   }
 
   /* --------------------------------------------------------------------
+     6bis) TOGGLE CUORICINO PREFERITI
+     Vuoto (outline) di default, pieno rosa (#FFADE2) quando selezionato:
+     un semplice click che alterna icona + classe "is-active" (il colore
+     rosa lo applica il CSS in base a quella classe, qui scambiamo solo
+     l'SVG outline<->solid e l'attributo aria-pressed per l'accessibilità).
+
+     NOTA: questo è uno stato SOLO visivo/locale al browser (non persiste
+     al reload, non chiama nessun endpoint) — la vera persistenza del
+     "preferito" (salvare la scelta per l'utente loggato) è lato Laravel,
+     fuori scope per questo POC. Vedi README per la nota di integrazione. */
+  function bindFavoriteEvents($list) {
+    $list.on("click", ".toplist-card__favorite", function () {
+      var $button = $(this);
+      var isActive = $button.hasClass("is-active");
+
+      $button.toggleClass("is-active", !isActive);
+      $button.attr("aria-pressed", String(!isActive));
+      $button.html(isActive ? ICON_HEART_OUTLINE : ICON_HEART_SOLID);
+    });
+  }
+
+  /* --------------------------------------------------------------------
      7) INIZIALIZZAZIONE
      -------------------------------------------------------------------- */
   $(function () {
@@ -339,6 +379,7 @@
     $list.html(htmlParts.join(""));
 
     bindCarouselEvents($list);
+    bindFavoriteEvents($list);
     bindStatEvents($list);
   });
 

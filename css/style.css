@@ -173,6 +173,11 @@
   color: var(--toplist-text);
 }
 
+/* Cuoricino preferiti: vuoto/outline di default, si tinge di rosa già al
+   passaggio del mouse (anteprima dell'azione) e diventa rosa pieno quando
+   selezionato (classe "is-active", aggiunta/tolta al click in
+   toplist-card.js — vedi bindFavoriteEvents). Il colore #FFADE2 è quello
+   indicato dal cliente. */
 .toplist-card__favorite {
   display: inline-flex;
   align-items: center;
@@ -182,6 +187,22 @@
   padding: 0;
   color: var(--toplist-text);
   cursor: pointer;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+
+.toplist-card__favorite:hover {
+  color: #ffade2;
+}
+
+.toplist-card__favorite.is-active {
+  color: #ffade2;
+}
+
+/* Piccolo "pop" quando si seleziona, feedback tattile in più (non richiesto
+   esplicitamente ma coerente con un'interazione di tipo "like") */
+.toplist-card__favorite.is-active:active,
+.toplist-card__favorite:active {
+  transform: scale(0.9);
 }
 
 /* ---- 2.2) Media (foto + carosello) + corpo (titolo/descrizione) ---------- */
@@ -465,6 +486,15 @@
   padding: 10px 20px;
   border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
+  /* flex: nella modale Reazioni questa riga ospita SIA il chip "Utenti
+     anonimi" a sinistra SIA il set di reazioni disponibili a destra (vedi
+     stat-detail-modal.js, buildReactionPickerHtml) — nelle altre modali
+     resta un semplice contenitore per il solo chip, il flex non cambia
+     nulla visivamente in quel caso. */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .stat-modal__anonymous-chip {
@@ -477,6 +507,26 @@
   padding: 5px 14px;
   font-size: 12px;
   font-weight: 600;
+}
+
+/* ---- Reazioni disponibili (solo modale Reazioni) --------------------- */
+.stat-modal__reaction-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stat-modal__reaction-picker-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid var(--modal-header-border);
+  color: var(--modal-chip-text);
+  cursor: default; /* qui è solo informativo (mostra cosa si PUÒ scegliere), non un vero picker interattivo */
 }
 
 /* Elenco righe: SCORREVOLE (max-height + overflow-y), non "clip" come nel

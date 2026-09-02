@@ -139,6 +139,42 @@ stessa icona ufficiale e stesso verde brand (`#25d366`) già usati nel
 pulsante WhatsApp del componente slider vetrine, per coerenza visiva tra i
 due componenti del sito.
 
+## Testi footer statistiche — allineati al node Figma 516:9277
+
+Le etichette sotto i 5 contatori (Follower/Reazioni/Preferiti/Recensioni/
+Donazioni) erano rimaste in inglese ("Followers"/"Reactions"/"Saved"/
+"Reviews") da una modifica precedente in cui erano state aggiornate solo
+le icone, non i testi — corretto: ora il testo è identico a quello del
+node Figma mostrato dal cliente.
+
+## Cuoricino "preferiti" — stato vuoto/pieno
+
+Il pulsante cuore accanto al badge TOPLIST (header della card) ora si
+comporta come un vero toggle "mi piace":
+- **Di default**: contorno vuoto (icona Font Awesome "heart" regular).
+- **Al passaggio del mouse**: si tinge di rosa (`#FFADE2`), anteprima
+  dell'azione prima del click.
+- **Cliccato/selezionato**: diventa pieno e rosa (icona Font Awesome
+  "heart" solid, stesso colore `#FFADE2`), resta così finché non si clicca
+  di nuovo.
+
+Vedi `bindFavoriteEvents()` in `toplist-card.js`. **Nota**: questo stato è
+solo visivo/lato browser in questo POC (non chiama nessun endpoint, non
+persiste al reload) — la persistenza reale del preferito per l'utente
+loggato è lato Laravel, vedi "Domande per il senior".
+
+## Reazioni disponibili nella modale "Reazioni"
+
+Accanto al chip "Utenti anonimi" nella modale Reazioni compaiono ora le 4
+icone che rappresentano le reazioni che un utente può lasciare (le stesse
+4 che compaiono come "valore" nelle righe della lista: cuore nero,
+innamorato, fuoco, indifferente) — su richiesta esplicita, **solo icone
+Font Awesome Free 6.7.2** (`heart`, `face-grin-hearts`, `fire`,
+`face-meh`), non le emoji usate nel resto della modale per il valore di
+ogni riga. In questo POC sono solo informative (mostrano cosa si PUÒ
+scegliere), non ancora cliccabili per lasciare una reazione vera — vedi
+"Domande per il senior" per il collegamento a un endpoint reale.
+
 ## Note per l'integrazione futura in Laravel
 
 - Il markup di `index.html` dentro `#toplistList` può diventare un Blade
@@ -188,3 +224,14 @@ due componenti del sito.
    per rosa/magenta/rosso/arancione/giallo/verde/blu/viola/nero, non
    valori esatti forniti dal design — da allineare con la palette
    ufficiale quando il pannello opzioni (fuori scope qui) sarà progettato.
+8. **Persistenza del "preferito"**: che endpoint salva/rimuove il
+   preferito per l'utente loggato (`POST`/`DELETE /api/annunci/:id/preferiti`
+   o simile)? Serve anche sapere se la card deve arrivare già con lo stato
+   iniziale "preferito da questo utente" valorizzato dal server (oggi parte
+   sempre vuota, vedi sezione dedicata sopra).
+9. **Reazioni cliccabili**: le 4 icone mostrate nella modale Reazioni sono
+   oggi solo informative — se in futuro devono diventare cliccabili per
+   lasciare davvero una reazione, serve l'endpoint corrispondente (es.
+   `POST /api/annunci/:id/reazioni` con il tipo scelto) e la gestione di
+   "un utente può cambiare/togliere la propria reazione" o solo aggiungerne
+   una nuova.
