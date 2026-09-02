@@ -1,0 +1,607 @@
+/* ============================================================================
+   STILE CUSTOM — CARD TOPLIST + MODALI DI DETTAGLIO
+   Questo file NON tocca bootstrap.min.css: lo estende soltanto (qui usato
+   solo per il grid/.container, come nel componente slider vetrine).
+   Ogni regola è commentata per spiegare "perché", non solo "cosa".
+   ============================================================================ */
+
+/* ---- Variabili colore ---------------------------------------------------- */
+:root {
+  --toplist-border: #77767b;         /* bordo card/badge/pulsanti (Figma node 409:4482) */
+  --toplist-border-light: #c8c5cb;   /* bordo header/footer interni */
+  --toplist-text: #1a1c1c;
+  --toplist-text-muted: #47464b;
+  --toplist-bg: #f9f9f9;
+
+  --modal-accent: #fe9bdd;           /* rosa, colore condiviso da tutte e 5 le modali (Figma) */
+  --modal-header-bg: rgba(254, 155, 221, 0.08);
+  --modal-header-border: rgba(254, 155, 221, 0.2);
+  --modal-chip-bg: rgba(254, 155, 221, 0.12);
+  --modal-chip-text: #c2607a;
+  --modal-avatar-bg: rgba(254, 155, 221, 0.15);
+  --modal-row-border: #f3f3f3;
+  --modal-name: #212121;
+  --modal-muted: #888;
+}
+
+.page-wrapper {
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+
+/* ============================================================================
+   1) LISTA CARD — spaziatura tra una card e l'altra
+   ============================================================================ */
+#toplistList {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ============================================================================
+   2) CARD TOPLIST (Figma node 409:4482)
+   Il bordo colorato eventuale (flag is_bordo, sezione 6.2.2 doc) è
+   applicato come inline style da JS (colore dinamico, vedi
+   toplist-card.js) — qui definiamo solo il bordo di DEFAULT (neutro).
+   ============================================================================ */
+.toplist-card {
+  border: 1px solid var(--toplist-border);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--toplist-bg);
+  transition: border-color 0.15s ease; /* morbido se il bordo colorato cambia via JS */
+}
+
+/* ---- 2.1) Header: badge NEW/età/video/foto/prezzo (sx) + stato/TOPLIST/preferiti (dx) ---- */
+.toplist-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--toplist-border-light);
+}
+
+.toplist-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.toplist-card__new-badge {
+  background: #eee;
+  border: 1px solid var(--toplist-border);
+  border-radius: 2px;
+  padding: 3px 9px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+}
+
+.toplist-card__meta {
+  font-size: 16px;
+  color: var(--toplist-text-muted);
+  white-space: nowrap;
+}
+
+.toplist-card__meta--icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toplist-card__price {
+  font-family: "Courier New", monospace; /* stand-in per JetBrains Mono (Figma), non incluso nel pacchetto per restare offline senza scaricare un intero webfont per 3 caratteri */
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  font-size: 16px;
+  color: #000;
+}
+
+.toplist-card__header-right {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+/* ---- Badge di stato (ONLINE ORA / DISPONIBILE ORA / RISPONDO SUBITO) -----
+   Colori: DISPONIBILE ORA verde e RISPONDO SUBITO blu sono quelli indicati
+   nella documentazione (sezione 6.2.3) — il mockup Figma statico li mostra
+   in grigio neutro come placeholder, qui usiamo i colori reali richiesti.
+   ONLINE ORA resta neutro/scuro con pallino, coerente con l'unico badge di
+   stato già "a colore risolto" nel file Figma. */
+.toplist-card__status-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.toplist-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.toplist-badge--neutral {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.toplist-badge__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px solid #fff;
+}
+
+.toplist-badge--available {
+  background: #22c55e;
+  color: #fff;
+}
+
+.toplist-badge--fast-reply {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.toplist-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.toplist-card__toplist-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--toplist-border);
+  border-radius: 2px;
+  padding: 3px 9px;
+  font-size: 10px;
+  color: var(--toplist-text);
+}
+
+.toplist-card__favorite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--toplist-text);
+  cursor: pointer;
+}
+
+/* ---- 2.2) Media (foto + carosello) + corpo (titolo/descrizione) ---------- */
+.toplist-card__content {
+  display: flex;
+  align-items: stretch;
+}
+
+.toplist-card__media {
+  position: relative;
+  flex: 0 0 36%;           /* proporzione ~372/1022 del mockup Figma */
+  max-width: 373px;
+  min-height: 256px;
+  background: #f3f3f3;
+  border-right: 1px solid #e4e4e7;
+}
+
+/* Placeholder foto: stesso pattern "X" diagonale già usato nello slider
+   vetrine, per coerenza visiva tra i componenti del sito finché non ci
+   sono foto reali da mostrare. */
+.toplist-card__photo-placeholder {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(45deg, transparent 49.5%, #e4e4e7 49.5%, #e4e4e7 50.5%, transparent 50.5%),
+    linear-gradient(-45deg, transparent 49.5%, #e4e4e7 49.5%, #e4e4e7 50.5%, transparent 50.5%);
+}
+
+.toplist-card__carousel-arrow {
+  position: absolute;
+  top: 50%;
+  margin-top: -11px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--toplist-border-light);
+  border-radius: 50%;
+  color: var(--toplist-text);
+  cursor: pointer;
+  padding: 0;
+}
+
+.toplist-card__carousel-arrow--prev { left: 8px; }
+.toplist-card__carousel-arrow--next { right: 8px; }
+
+.toplist-card__photo-counter {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: #fff;
+  border: 1px solid #cfc4c5;
+  padding: 5px 9px;
+  font-size: 10px;
+  font-family: "Courier New", monospace;
+  color: var(--toplist-text);
+}
+
+.toplist-card__body {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 16px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.toplist-card__title {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--toplist-text);
+}
+
+.toplist-card__description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--toplist-text-muted);
+}
+
+/* ---- 2.3) Footer: statistiche cliccabili + pulsanti Chiama/Messaggio ----- */
+.toplist-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 13px 12px 12px;
+  background: #fff;
+  border-top: 1px solid var(--toplist-border-light);
+}
+
+.toplist-card__stats {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.toplist-card__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+}
+
+.toplist-card__stat-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #000;
+}
+
+.toplist-card__stat-label {
+  font-size: 13px;
+  color: var(--toplist-text-muted);
+}
+
+.toplist-card__stat:hover .toplist-card__stat-label {
+  text-decoration: underline; /* feedback minimo di interattività, non nel mockup ma utile in un pulsante vero */
+}
+
+.toplist-card__contact-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.toplist-card__contact-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 25px;
+  border-radius: 2px;
+  border: 1px solid var(--toplist-border);
+  font-size: 16px;
+  color: var(--toplist-text);
+  cursor: pointer;
+}
+
+.toplist-card__contact-button--call {
+  background: var(--toplist-bg);
+}
+
+.toplist-card__contact-button--message {
+  background: #e8e8e8;
+}
+
+/* ============================================================================
+   3) RESPONSIVE — adattamento mobile
+   Il node Figma 409:4482 è SOLO desktop (riga fissa 1024px, nessuna
+   variante mobile fornita per questo componente, a differenza dello
+   slider vetrine che aveva un node dedicato 681:2090). L'adattamento qui
+   sotto è quindi una scelta ragionevole di chi scrive il codice, non una
+   traduzione 1:1 di un mockup: da confermare col design prima di andare
+   in produzione (vedi "Domande per il senior" nel README).
+   ============================================================================ */
+@media (max-width: 767px) {
+  .toplist-card__content {
+    flex-direction: column;
+  }
+  .toplist-card__media {
+    flex: none;
+    max-width: none;
+    width: 100%;
+    min-height: 220px;
+  }
+  .toplist-card__header-right {
+    gap: 12px;
+  }
+  .toplist-card__footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .toplist-card__stats {
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .toplist-card__contact-actions {
+    justify-content: stretch;
+  }
+  .toplist-card__contact-button {
+    flex: 1 1 50%;
+    justify-content: center;
+    padding: 9px 12px;
+  }
+}
+
+/* ============================================================================
+   4) MODALI DI DETTAGLIO (stat-detail-modal.js)
+   Struttura condivisa dalle 5 modali (Follower/Reazioni/Preferiti/
+   Recensioni/Donazioni) — Figma node 479:13332 (Reazioni, quella con più
+   varianti: chip anonimi + colonna valore).
+   ============================================================================ */
+.stat-modal__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+}
+
+.stat-modal {
+  width: 100%;
+  max-width: 500px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid rgba(254, 155, 221, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(254, 155, 221, 0.15), 0 8px 24px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.stat-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--modal-header-bg);
+  border-bottom: 1px solid var(--modal-header-border);
+  flex-shrink: 0;
+}
+
+.stat-modal__header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1.7px;
+  color: #1a1a1a;
+}
+
+.stat-modal__header-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.stat-modal__close-icon {
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 18px;
+  color: #aaa;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.stat-modal__close-icon:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.stat-modal__anonymous-bar {
+  padding: 10px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.stat-modal__anonymous-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--modal-chip-bg);
+  color: var(--modal-chip-text);
+  border-radius: 20px;
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Elenco righe: SCORREVOLE (max-height + overflow-y), non "clip" come nel
+   render statico di Figma — con un numero di interazioni maggiore di
+   quelle mostrate nel mockup, la lista deve poter scorrere internamente
+   invece di far crescere la modale oltre lo schermo. */
+.stat-modal__rows {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.stat-modal__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--modal-row-border);
+}
+
+.stat-modal__avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--modal-avatar-bg);
+  border: 1px solid var(--modal-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--modal-accent);
+}
+
+.stat-modal__row-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.stat-modal__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--modal-name);
+}
+
+.stat-modal__city {
+  font-size: 12px;
+  color: var(--modal-muted);
+}
+
+.stat-modal__value {
+  flex-shrink: 0;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.stat-modal__value--amount {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--modal-accent);
+}
+
+.stat-modal__date {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--modal-muted);
+  min-width: 70px;
+  text-align: right;
+}
+
+/* ---- Variante "review" (Recensioni): riga più alta, layout diverso ------- */
+.stat-modal__row--review {
+  align-items: flex-start;
+}
+
+.stat-modal__row-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.stat-modal__row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.stat-modal__row--review .stat-modal__name {
+  font-weight: 600;
+}
+
+.stat-modal__stars {
+  color: #f5b301;
+  font-size: 15px;
+  letter-spacing: 1px;
+  margin: 4px 0;
+}
+
+.stat-modal__review-text {
+  margin: 0;
+  font-size: 13px;
+  color: #444;
+  line-height: 1.4;
+}
+
+.stat-modal__footer {
+  padding: 12px 20px;
+  background: var(--modal-header-bg);
+  border-top: 1px solid var(--modal-header-border);
+  flex-shrink: 0;
+}
+
+.stat-modal__close-button {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  background: #fff;
+  border: 1px solid rgba(254, 155, 221, 0.4);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+}
+
+.stat-modal__close-button:hover {
+  background: #fafafa;
+}
+
+@media (max-width: 480px) {
+  .stat-modal__overlay {
+    padding: 0;
+    align-items: flex-end; /* su mobile la modale sale da sotto, pattern comune per gli overlay a schermo pieno */
+  }
+  .stat-modal {
+    max-height: 85vh;
+    border-radius: 16px 16px 0 0;
+  }
+}

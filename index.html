@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!--
+  ============================================================================
+  PROVA TECNICA — CARD TOPLIST + MODALI DI DETTAGLIO
+  Riferimento design: Figma "Incontriamoci", node 409:4482 ("Toplist Item 1")
+  per la card, e nodi 479:13268 / 479:13332 / 479:13408 / 479:13460 / 479:13528
+  per le 5 modali di dettaglio (Follower, Reazioni, Preferiti, Recensioni,
+  Donazioni) — vedi documento Incontriamoci_Documentazione_Funzionalita.docx,
+  sezioni 6 e 7.
+
+  Componente SEPARATO dallo slider vetrine (repo/cartella dedicata, come da
+  indicazione del cliente: un componente = una cartella = un push).
+
+  Stack: Bootstrap 3.4.1 (solo CSS, per il grid) + jQuery 3.7.1 + Font Awesome
+  Free 6.7.2 (icone frecce carosello, inline SVG) — stesso approccio già
+  validato nel componente slider vetrine. 100% offline, nessun CDN.
+
+  FUORI SCOPE per questo componente (rimandato a un push futuro dedicato):
+  il pannello opzioni "In risalto" da cui l'inserzionista IMPOSTA i flag
+  is_bordo/colore_bordo/is_disponibile_subito/is_online_ora/is_rispondo_subito
+  (Figma node 577:8015) e il relativo calcolo prezzi a interpolazione. Questa
+  card si limita a LEGGERE quei flag per decidere cosa mostrare — vedi
+  "Schema dati" nel README per i dettagli.
+  ============================================================================
+-->
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prova Card TopList — Incontriamoci</title>
+
+  <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <div class="container page-wrapper">
+
+    <!--
+      ==========================================================================
+      LISTA CARD TOPLIST
+      Il markup delle card NON viene scritto qui a mano: è generato da
+      js/toplist-card.js a partire da un array di annunci finti (vedi
+      commenti nel file JS). In produzione l'array arriverà da Laravel
+      (Blade o AJAX), la struttura del componente non cambia.
+
+      Struttura di OGNI card (classi CSS, vedi style.css):
+        .toplist-card                    -> riga esterna (bordo colorato se is_bordo)
+          .toplist-card__header          -> badge NEW/età/video/foto/prezzo + badge di stato + TOPLIST/preferiti
+          .toplist-card__media           -> foto con carosello (frecce + contatore N/tot)
+          .toplist-card__body            -> titolo + descrizione (link all'annuncio)
+          .toplist-card__footer          -> 5 contatori cliccabili (aprono le modali) + pulsanti Chiama/Messaggio
+      ==========================================================================
+    -->
+    <div id="toplistList">
+      <!-- Le .toplist-card vengono iniettate qui via jQuery -->
+    </div>
+
+  </div>
+
+  <!--
+    Contenitore delle modali di dettaglio: rimane VUOTO nell'HTML statico,
+    stat-detail-modal.js ci inietta (e rimuove) la modale corrente quando
+    l'utente clicca su uno dei 5 contatori nel footer di una card. Un solo
+    contenitore condiviso, riusato per tutte e 5 le modali: non ce n'è
+    bisogno di 5 copie nel markup.
+  -->
+  <div id="statDetailModalRoot"></div>
+
+  <!--
+    Script JS in fondo al body. ORDINE IMPORTANTE: jQuery prima di tutto,
+    poi stat-detail-modal.js (il componente modale, indipendente e riusabile
+    da solo) e infine toplist-card.js (che lo richiama quando si clicca un
+    contatore).
+  -->
+  <script src="js/jquery.min.js"></script>
+  <script src="js/stat-detail-modal.js"></script>
+  <script src="js/toplist-card.js"></script>
+</body>
+</html>
