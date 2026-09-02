@@ -67,7 +67,7 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: nowrap;
-  gap: 12px;
+  gap: 8px;
   padding: 12px;
   background: #fff;
   border-bottom: 1px solid var(--toplist-border-light);
@@ -131,7 +131,16 @@
 .toplist-card__header-right {
   display: flex;
   align-items: center;
-  gap: 32px; /* stesso gap del node Figma originale (Frame 35), non ridotto */
+  /* Il gap di 32px del node Figma originale (Frame 35) andava bene lì
+     perché quel frame conteneva SOLO 1 badge di stato + TOPLIST; con
+     tutti e 3 i badge di stato attivi (caso reale più comune, non quello
+     mostrato nel mockup) 32px lascia troppo poco spazio al cuoricino
+     preferiti, che finiva fuori dalla vista a destra (serviva scroll per
+     vederlo, ma senza un indizio visivo sembrava sparito). Ridotto per
+     lasciare sempre spazio al cuoricino senza dover scorrere, alle
+     larghezze desktop più comuni — vedi anche lo scroll orizzontale di
+     sicurezza sull'header per le larghezze più strette. */
+  gap: 8px;
   flex-wrap: nowrap;
   flex-shrink: 0;
   margin-left: auto; /* si "appoggia" a destra quando c'è spazio, come prima con justify-content:space-between */
@@ -210,7 +219,7 @@
 .toplist-card__header-actions {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   flex-wrap: nowrap;
   flex-shrink: 0;
 }

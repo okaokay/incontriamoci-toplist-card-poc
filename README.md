@@ -366,6 +366,17 @@ su tutti i suoi elementi diretti e i badge). La scrollbar è nascosta
 visivamente l'header. Testato: altezza header identica su desktop,
 tablet (768px) e mobile (390px) — mai raddoppiata, mai andata a capo.
 
+**Follow-up**: con lo scroll attivo, sulla card con TUTTI e 3 i badge di
+stato attivi (caso più "pieno", non quello mostrato nel mockup Figma con
+un solo badge) il cuoricino preferiti finiva comunque fuori dalla vista a
+larghezze desktop "medie" (~900px) — tecnicamente raggiungibile scorrendo,
+ma senza un indizio visivo sembrava sparito, segnalato dal cliente. Il gap
+di 32px tra i badge di stato e il gruppo TOPLIST/cuoricino (preso 1:1 dal
+node Figma originale, pensato per un solo badge) è stato ridotto — insieme
+agli altri gap dell'header — così il cuoricino resta visibile senza dover
+scorrere già da ~900px in su, con lo scroll orizzontale che resta come
+riserva solo per le larghezze più strette (tablet/mobile).
+
 ## Domande per il senior
 
 1. **Contratto delle 5 liste di dettaglio**: un endpoint dedicato per tipo
