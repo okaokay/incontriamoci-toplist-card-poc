@@ -112,19 +112,47 @@
      senior come cambia la card in base ai dati (bordo colorato sì/no,
      badge di stato diversi, ecc.) senza dover impostare nulla a mano.
 
-     SCHEMA DATI — campi che la card legge (vedi README per il dettaglio
-     completo pensato per l'integrazione Laravel):
-       - Campi diretti annuncio: id, name (nome/nickname pubblico
-         dell'inserzionista — mancava nella prima versione della card,
-         segnalato dal cliente: senza non si capisce DI CHI è l'annuncio),
-         isNew, age, videoCount, photoCount, priceTier ("€"|"€€"|"€€€"),
-         title, description, photos[] (qui solo un conteggio, in
-         produzione sarà l'array di URL vero e proprio), stats
-         { followers, reactions, saved, reviews, donations }
-       - Flag dal FUTURO pannello opzioni "In risalto" (sola lettura qui,
-         vedi punto 1 sopra e README): isToplist, isBordo + coloreBordo,
-         isDisponibileSubito, isOnlineOra, isRispondoSubito
-     -------------------------------------------------------------------- */
+     SCHEMA DATI — ogni campo qui sotto è un dato che in produzione arriva
+     dal database, NON testo statico scritto a mano: per ciascuno indico
+     la fonte Eloquent più plausibile, così il senior sa esattamente dove
+     agganciare la query reale (da confermare/correggere in base allo
+     schema reale, sono nomi plausibili non certificati):
+
+       - id            → listings.id (o listings.uuid)
+       - name          → users.display_name (o listings.nickname, se il
+                          nome pubblico è specifico dell'annuncio e non
+                          dell'account) — CAMPO AGGIUNTO DOPO la prima
+                          versione della card, segnalato dal cliente come
+                          dato mancante: senza, non si capisce DI CHI è
+                          l'annuncio. È un dato "catturato" (inserito
+                          dall'utente in fase di registrazione/pubblicazione),
+                          non decorativo, quindi va risolto con una query
+                          reale come tutti gli altri campi qui sotto — non
+                          basta scriverlo in pagina, va recuperato dal
+                          profilo/annuncio corretto.
+       - isNew         → listings.created_at (es. "creato negli ultimi 7 giorni")
+       - age           → users.birth_date (calcolata) o users.age se già salvata
+       - videoCount    → count di listing_media dove type = "video"
+       - photoCount    → count di listing_media dove type = "photo"
+       - priceTier     → listings.price_tier (enum "€"|"€€"|"€€€", o calcolato)
+       - title         → listings.title
+       - description   → listings.description
+       - photos[]      → listing_media (ordinate, la prima è quella con
+                          id = preview_media_id, sezione 6.3 della doc)
+       - stats         → COUNT delle relazioni listing→followers/reactions/
+                          savedBy/reviews/donations (stesse relazioni già
+                          documentate per le modali, vedi stat-detail-modal.js)
+       - isToplist, isBordo, coloreBordo, isDisponibileSubito, isOnlineOra,
+         isRispondoSubito → FUORI SCOPE qui (sola lettura): impostati dal
+         futuro pannello opzioni "In risalto", vedi punto 1 sopra e README.
+
+     fetchListings() più sotto è l'UNICO punto che produce questi dati:
+     oggi restituisce l'array finto, in produzione diventerà una vera
+     chiamata (es. $.get("/api/annunci?categoria=roma")) — stessa identica
+     idea già usata in fetchVetrinePage (slider vetrine) e fetchStatRows
+     (modali di questo stesso componente). Nessun altro punto del file
+     legge MOCK_LISTINGS direttamente: così il senior deve toccare UNA
+     funzione sola per collegare i dati veri, non cercarli sparsi nel file. */
   var MOCK_LISTINGS = [
     {
       id: "listing-1",
@@ -184,6 +212,19 @@
       isRispondoSubito: false
     }
   ];
+
+  /* Punto di aggancio per il senior: oggi restituisce l'array finto qui
+     sopra, in produzione diventerà una vera chiamata al backend, es.
+
+         function fetchListings(categoria) {
+           return $.get("/api/annunci", { categoria: categoria });
+         }
+
+     Nessun'altra parte del file legge MOCK_LISTINGS direttamente (vedi
+     punto 7, inizializzazione): tutte le card passano da qui. */
+  function fetchListings() {
+    return MOCK_LISTINGS;
+  }
 
   /* --------------------------------------------------------------------
      3) HTML DEI BADGE DI STATO (header, in alto a destra)
@@ -402,8 +443,13 @@
   $(function () {
     var $list = $("#toplistList");
 
+    /* Passiamo SEMPRE da fetchListings(), mai da MOCK_LISTINGS
+       direttamente (vedi punto 2): è l'unico punto che il senior deve
+       toccare per collegare i dati reali. */
+    var listings = fetchListings();
+
     var htmlParts = [];
-    $.each(MOCK_LISTINGS, function (index, listing) {
+    $.each(listings, function (index, listing) {
       htmlParts.push(buildCardHtml(listing));
     });
     $list.html(htmlParts.join(""));

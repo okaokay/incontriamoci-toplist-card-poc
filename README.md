@@ -250,11 +250,34 @@ Questa è probabilmente la domanda più importante da chiudere prima di
 integrare davvero le modali — vedi anche i punti 1-3 di "Domande per il
 senior" qui sotto, che dipendono direttamente da questa decisione.
 
+## Come i dati degli annunci arrivano alla card — il punto di aggancio
+
+Stessa logica già usata per lo slider vetrine e per le modali di questo
+componente (vedi sopra): **un'unica funzione isolata** produce i dati, e
+nessun'altra parte del file legge l'array finto direttamente.
+
+- `fetchListings()` in `toplist-card.js` è l'UNICO punto che il senior deve
+  toccare per collegare gli annunci reali: oggi restituisce
+  `MOCK_LISTINGS`, in produzione diventerà una vera chiamata (es.
+  `$.get("/api/annunci", { categoria: "roma" })`).
+- Subito sopra `MOCK_LISTINGS` c'è la mappatura **campo per campo** verso
+  la fonte dati Eloquent più plausibile (es. `name` → `users.display_name`,
+  `stats.followers` → count della relazione `listing→followers`, ecc.) —
+  utile come punto di partenza per scrivere la query reale, anche se i nomi
+  esatti delle colonne/relazioni andranno confermati con chi conosce lo
+  schema reale del database.
+- **Il nome dell'inserzionista (`name`)** in particolare: è un dato
+  "catturato" (inserito dall'utente in fase di registrazione o
+  pubblicazione annuncio), non testo statico — va quindi risolto con una
+  query reale come tutti gli altri campi, non semplicemente scritto in
+  pagina. Aggiunto dopo la prima versione della card perché il node Figma
+  non lo includeva nell'header (vedi commit precedente).
+
 ## Note per l'integrazione futura in Laravel
 
 - Il markup di `index.html` dentro `#toplistList` può diventare un Blade
   component (`<x-toplist-card :annuncio="$annuncio" />`), passando
-  l'annuncio reale al posto dei dati finti in `MOCK_LISTINGS`.
+  l'annuncio reale al posto dei dati finti restituiti da `fetchListings()`.
 - `stat-detail-modal.js` è indipendente dalla card: può essere incluso e
   riusato ovunque nel sito serva lo stesso tipo di lista dettaglio, non
   solo dalla card TopList.
