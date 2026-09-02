@@ -112,8 +112,11 @@
    Colori: DISPONIBILE ORA verde e RISPONDO SUBITO blu sono quelli indicati
    nella documentazione (sezione 6.2.3) — il mockup Figma statico li mostra
    in grigio neutro come placeholder, qui usiamo i colori reali richiesti.
-   ONLINE ORA resta neutro/scuro con pallino, coerente con l'unico badge di
-   stato già "a colore risolto" nel file Figma. */
+   ONLINE ORA: sfondo rosa #FFADE2 (coerente col resto della palette rosa
+   già usata per il cuoricino preferiti e le modali), testo nero, pallino
+   VERDE con animazione "pulse" per attirare l'attenzione — è il badge che
+   comunica una condizione favorevole per il cliente (l'inserzionista è
+   online ORA), quindi deve risaltare più degli altri due. */
 .toplist-card__status-badges {
   display: flex;
   gap: 6px;
@@ -134,16 +137,33 @@
 }
 
 .toplist-badge--neutral {
-  background: #e5e7eb;
-  color: #1f2937;
+  background: #ffade2;
+  color: #000;
 }
 
 .toplist-badge__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #000;
+  background: #22c55e;
   border: 1px solid #fff;
+  box-shadow: 0 0 0 rgba(34, 197, 94, 0.6);
+  animation: toplist-online-pulse 1.6s infinite;
+}
+
+/* Pulsazione del pallino: un "respiro" di ombra verde che si espande e
+   svanisce in loop — richiama l'attenzione senza essere fastidioso
+   (durata abbastanza lenta, nessun cambio di dimensione brusco). */
+@keyframes toplist-online-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 5px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
 }
 
 .toplist-badge--available {
@@ -327,11 +347,18 @@
   color: #000;
 }
 
-/* Reazioni: l'icona è emoji testuale ("🖤😐"), non un SVG — le diamo una
-   dimensione leggermente più piccola del default del font per restare
-   visivamente in linea con le icone SVG delle altre statistiche. */
-.toplist-card__stat-value--emoji {
+/* Reazioni: l'icona è emoji testuale ("🖤😐"), non un SVG. Altezza di riga
+   FISSA (line-height = height, overflow:hidden) così il glifo dell'emoji
+   — che nei font di sistema ha una "cassa" verticale naturale più alta
+   delle icone SVG a parità di font-size — non fa crescere l'intera riga
+   statistiche, mantenendo l'etichetta "Reazioni" allineata alle altre 4. */
+.toplist-card__stat-emoji-icon {
+  display: inline-flex;
+  align-items: center;
+  height: 14px;
+  line-height: 14px;
   font-size: 14px;
+  overflow: hidden;
 }
 
 .toplist-card__stat-label {

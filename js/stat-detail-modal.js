@@ -83,8 +83,23 @@
 
   /* Simula la chiamata di rete: sincrona qui (nessun setTimeout), stessa
      scelta già fatta per lo slider vetrine — vedi il commento sopra per
-     come diventerà una vera chiamata AJAX in produzione. */
-  function fetchStatRows(type) {
+     come diventerà una vera chiamata AJAX in produzione.
+
+     "listingId" arriva da toplist-card.js (letto da "data-listing-id"
+     sulla card cliccata) ed è ESATTAMENTE il pezzo che serve al senior:
+     in questo POC lo riceviamo ma lo ignoriamo (i dati finti sono uguali
+     per ogni annuncio, per semplicità), ma la firma della funzione è già
+     quella giusta — in produzione diventerà qualcosa come:
+
+         function fetchStatRows(type, listingId) {
+           return $.get("/api/annunci/" + listingId + "/stats/" + type);
+         }
+
+     cioè la stessa identica interfaccia, solo con una vera chiamata AJAX
+     al posto della tabella in memoria. Vedi README, sezione "Come i dati
+     arrivano a ogni modale", per il contratto completo (forma della
+     risposta attesa, endpoint proposto, ecc.). */
+  function fetchStatRows(type, listingId) {
     return MOCK_STAT_ROWS[type] || { anonymousCount: 0, rows: [] };
   }
 
@@ -185,11 +200,12 @@
        (Follower/Preferiti). */
     var valueHtml = "";
     if (rowType === "value") {
-      /* Donazioni mostra un importo in euro, Reazioni un'emoji: li
-         distinguiamo controllando se il valore è composto solo da cifre. */
+      /* Donazioni mostra un numero (senza simbolo "€", su richiesta
+         esplicita — solo la cifra), Reazioni un'emoji: li distinguiamo
+         controllando se il valore è composto solo da cifre. */
       var isAmount = /^\d+$/.test(row.value);
       valueHtml = '<span class="stat-modal__value' + (isAmount ? " stat-modal__value--amount" : "") + '">' +
-        (isAmount ? row.value + "€" : row.value) +
+        row.value +
         "</span>";
     }
 
@@ -210,15 +226,18 @@
      3) APERTURA MODALE
      Punto di ingresso pubblico: qualunque altro script (oggi solo
      toplist-card.js, in futuro magari anche un'altra pagina) chiama
-     StatDetailModal.open("reactions") e la modale compare in overlay.
+     StatDetailModal.open("reactions", "listing-1") e la modale compare in
+     overlay con i dati DI QUELL'ANNUNCIO. "listingId" è facoltativo solo
+     per comodità di test manuale in console — nell'uso reale dalla card
+     (toplist-card.js) viene sempre passato.
      -------------------------------------------------------------------- */
-  function openModal(type) {
+  function openModal(type, listingId) {
     var config = MODAL_TYPES[type];
     if (!config) {
       return; /* tipo sconosciuto: nessuna modale da aprire (difesa, non dovrebbe mai succedere) */
     }
 
-    var data = fetchStatRows(type);
+    var data = fetchStatRows(type, listingId);
 
     var chipHtml = "";
     if (config.hasAnonymousChip || config.showReactionPicker) {

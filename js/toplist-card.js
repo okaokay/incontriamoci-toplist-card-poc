@@ -275,7 +275,17 @@
               '<span class="toplist-card__stat-label">Follower</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="reactions">' +
-              '<span class="toplist-card__stat-value toplist-card__stat-value--emoji">' + ICON_REACTIONS_EMOJI + "<b>" + listing.stats.reactions + "</b></span>" +
+              /* L'emoji è avvolta in un suo span di dimensione FISSA
+                 (.toplist-card__stat-emoji-icon, vedi style.css): i font
+                 emoji hanno una "altezza di riga" naturale più alta delle
+                 icone SVG a parità di font-size, e senza questo wrapper la
+                 riga "Reazioni" risultava più alta delle altre 4,
+                 spingendo la sua etichetta più in basso e disallineandola
+                 dal resto della riga statistiche. */
+              '<span class="toplist-card__stat-value">' +
+                '<span class="toplist-card__stat-emoji-icon">' + ICON_REACTIONS_EMOJI + "</span>" +
+                "<b>" + listing.stats.reactions + "</b>" +
+              "</span>" +
               '<span class="toplist-card__stat-label">Reazioni</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="saved">' +
@@ -336,11 +346,19 @@
      5 x N_ANNUNCI bottoni in meno da agganciare uno per uno. Il tipo di
      modale da aprire è letto direttamente dall'attributo
      "data-stat-type" scritto in buildCardHtml (punto 4).
-     -------------------------------------------------------------------- */
+
+     IMPORTANTE per l'integrazione: passiamo anche il "listingId"
+     dell'annuncio (letto da "data-listing-id" sulla card contenitore,
+     vedi buildCardHtml) a StatDetailModal.open(). Senza, la modale non
+     saprebbe DI QUALE annuncio mostrare Follower/Reazioni/ecc. — è
+     esattamente il pezzo che serve al senior per collegare i dati reali,
+     vedi stat-detail-modal.js e il README ("Come i dati arrivano a ogni
+     modale") per il contratto completo. */
   function bindStatEvents($list) {
     $list.on("click", ".toplist-card__stat", function () {
       var type = $(this).data("stat-type");
-      window.StatDetailModal.open(type);
+      var listingId = $(this).closest(".toplist-card").data("listing-id");
+      window.StatDetailModal.open(type, listingId);
     });
   }
 

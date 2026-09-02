@@ -127,9 +127,13 @@ esplicitamente i colori reali: **verde per "DISPONIBILE ORA"** e **blu per
 `--available` e `--fast-reply` in `style.css`), seguendo lo stesso criterio
 già usato per il pulsante WhatsApp del componente slider vetrine (la
 documentazione/screenshot del cliente prevale sul wireframe Figma quando i
-due non coincidono). **ONLINE ORA** resta grigio scuro con pallino, l'unico
-dei tre badge che nel mockup ha già un colore "risolto" e coerente con lo
-stesso badge del componente vetrine.
+due non coincidono). **ONLINE ORA**, su richiesta esplicita, ha sfondo rosa
+`#FFADE2` (coerente con la palette rosa già usata per cuoricino preferiti e
+modali) con testo nero, e il pallino è **verde con animazione "pulse"** in
+loop (`@keyframes toplist-online-pulse` in `style.css`) — è il badge che
+comunica la condizione più favorevole per il cliente (l'inserzionista è
+online ORA), quindi deve attirare l'attenzione più degli altri due, che
+restano statici.
 
 ## Pulsante WhatsApp invece di "Message"
 
@@ -174,6 +178,73 @@ Font Awesome Free 6.7.2** (`heart`, `face-grin-hearts`, `fire`,
 ogni riga. In questo POC sono solo informative (mostrano cosa si PUÒ
 scegliere), non ancora cliccabili per lasciare una reazione vera — vedi
 "Domande per il senior" per il collegamento a un endpoint reale.
+
+## Donazioni: solo il numero, senza simbolo "€"
+
+Su richiesta esplicita, l'importo nella modale Donazioni mostra solo la
+cifra (es. `50`), senza il simbolo `€` che c'era prima — resta comunque
+in evidenza (colore rosa, grassetto) rispetto al resto della riga.
+
+## Come i dati arrivano a ogni modale — il pezzo che serve al senior
+
+Fino a questa versione c'era un **buco reale nell'integrazione**: la card
+scrive un `data-listing-id` su ogni riga (`<div class="toplist-card"
+data-listing-id="...">`, vedi `buildCardHtml`), ma quando si cliccava un
+contatore quell'id non veniva letto né passato da nessuna parte — la
+modale non aveva modo di sapere **di quale annuncio** mostrare
+Follower/Reazioni/ecc. In pratica, con più card in pagina, avrebbero
+mostrato tutte gli stessi identici dati finti (cosa che infatti succedeva,
+solo che essendo dati finti uguali per ogni annuncio non si notava).
+
+**Sistemato così:**
+
+1. Al click su un contatore (`bindStatEvents` in `toplist-card.js`),
+   leggiamo il `data-listing-id` dalla card più vicina (`.closest(...)`)
+   e lo passiamo a `StatDetailModal.open(type, listingId)`.
+2. `stat-detail-modal.js` inoltra `listingId` a `fetchStatRows(type,
+   listingId)` — oggi lo ignora (i dati finti in `MOCK_STAT_ROWS` sono
+   condivisi da tutti gli annunci, per semplicità del POC), ma **la firma
+   della funzione è già quella corretta**.
+
+**Cosa deve fare il senior per agganciare i dati veri**, in ordine:
+
+1. Decidere il contratto dell'endpoint (proposta): un'unica rotta
+   parametrica per tutte e 5 le modali, es.
+
+   ```
+   GET /api/annunci/{listingId}/stats/{tipo}
+   ```
+
+   dove `{tipo}` è uno tra `followers|reactions|saved|reviews|donations`
+   (stessi valori già usati in `data-stat-type` sui bottoni della card, non
+   serve nessuna mappatura aggiuntiva). Risposta attesa, stessa forma dei
+   dati finti attuali:
+
+   ```json
+   {
+     "anonymous_count": 1,
+     "rows": [
+       { "name": "Chiara", "city": "Firenze", "value": "🖤", "date": "2025-03-19" }
+     ]
+   }
+   ```
+
+   (`value` e `rating`/`text` cambiano forma a seconda del tipo — vedi
+   `buildRowHtml()` in `stat-detail-modal.js` per i 3 formati riga
+   esistenti: `simple`, `value`, `review`.)
+2. Sostituire il corpo di `fetchStatRows(type, listingId)` con una vera
+   chiamata (es. `$.get("/api/annunci/" + listingId + "/stats/" + type)`).
+   Come per lo slider vetrine, l'unico cambiamento strutturale è che
+   diventerà **asincrona** — `openModal()` andrà adattato ad aspettare la
+   Promise prima di costruire l'HTML delle righe.
+3. Le date nei dati finti sono in formato `GG/MM/AAAA` (italiano, pronto
+   per essere mostrato così com'è); se il backend restituisce date in
+   formato ISO (`AAAA-MM-GG`) va deciso se formattarle lato server o lato
+   client prima di renderizzarle.
+
+Questa è probabilmente la domanda più importante da chiudere prima di
+integrare davvero le modali — vedi anche i punti 1-3 di "Domande per il
+senior" qui sotto, che dipendono direttamente da questa decisione.
 
 ## Note per l'integrazione futura in Laravel
 
