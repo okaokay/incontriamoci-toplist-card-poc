@@ -164,21 +164,26 @@ annuncio (doc, sezione 2):
   ufficiali** — vanno confermate con cliente/senior prima di andare in
   produzione (vedi "Domande per il senior").
 
-## Nome, Chiama e badge TOPLIST — stile "chip catturato" (rosa + bordo nero)
+## Nome, Chiama e badge TOPLIST — stile "chip catturato" (valori esatti da Figma)
 
-Su richiesta esplicita, questi tre elementi condividono ora lo stesso
-trattamento visivo — sfondo rosa `#FFADE2`, bordo nero 2px, angoli
-arrotondati, testo in grassetto — per segnalare visivamente che si tratta
-di **dati catturati durante il caricamento dell'annuncio**, non di
-elementi puramente decorativi della UI:
+Su richiesta esplicita, questi tre elementi condividono lo stesso
+trattamento visivo per segnalare che si tratta di **dati catturati durante
+il caricamento dell'annuncio**, non elementi puramente decorativi della
+UI. Una prima versione usava colori/bordi stimati da uno screenshot; sono
+stati poi corretti con i **valori esatti** presi direttamente dai node
+Figma indicati dal cliente:
 
-- **Nome inserzionista** (`.toplist-card__name` in `style.css`)
-- **Pulsante Chiama** (`.toplist-card__contact-button--call`)
-- **Badge TOPLIST** (`.toplist-card__toplist-flag`, qui a forma di pillola
-  perché era già un badge corto)
+| Elemento | Node Figma | Sfondo | Bordo | Radius |
+|---|---|---|---|---|
+| Nome inserzionista (`.toplist-card__name`) | `577:12042` | `#fe9bdd` | `1px #77767b` | `2px` |
+| Badge TOPLIST (`.toplist-card__toplist-flag`) | `461:3835` | `#fe9bdd` | `1px #77767b` | `2px` |
+| Pulsante Chiama (`.toplist-card__contact-button--call`) | `409:4560` | `#fe9bdd` | `1px #77767b` | `2px` |
 
-Il pulsante WhatsApp resta verde brand (invariato, vedi sezione sopra):
-il trattamento rosa+bordo nero è specifico solo per questi 3 elementi.
+Angoli **squadrati** (radius 2px), non arrotondati/pillola come nella
+versione precedente — coerente col resto della card (badge NEW rimosso,
+badge TOPLIST, header/footer hanno tutti lo stesso radius 2/4px). Il
+pulsante WhatsApp resta verde brand (invariato, vedi sezione sopra): il
+trattamento rosa è specifico solo per questi 3 elementi.
 
 ## Titolo, descrizione e foto — anche questi sono campi da agganciare
 

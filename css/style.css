@@ -72,16 +72,18 @@
 }
 
 /* Nome inserzionista: primo elemento dell'header, il più prominente —
-   "chip" rosa con bordo nero marcato (su richiesta esplicita, stesso
-   trattamento richiesto anche per il pulsante Chiama e il badge TOPLIST
-   qui sotto: sfondo #FFADE2, bordo nero 2px, angoli arrotondati). */
+   "chip" rosa (stesso trattamento richiesto anche per il pulsante Chiama
+   e il badge TOPLIST qui sotto). Valori ESATTI dal node Figma 577:12042
+   mostrato dal cliente: sfondo #fe9bdd, bordo 1px #77767b, radius 2px —
+   NON gli stessi valori "a occhio" usati nella versione precedente
+   (#FFADE2 + bordo nero 2px + radius 8px, presi da uno screenshot). */
 .toplist-card__name {
   display: inline-block;
-  background: #ffade2;
-  border: 2px solid #000;
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-size: 18px;
+  background: #fe9bdd;
+  border: 1px solid #77767b;
+  border-radius: 2px;
+  padding: 3px 9px;
+  font-size: 16px;
   font-weight: 700;
   color: #000;
 }
@@ -187,20 +189,21 @@
   gap: 16px;
 }
 
-/* Badge TOPLIST: stesso trattamento "chip rosa + bordo nero" richiesto per
-   nome inserzionista e pulsante Chiama — qui a forma di pillola (era già
-   un badge corto, coerente con gli altri badge di stato della card). */
+/* Badge TOPLIST: stesso trattamento "chip rosa" del nome inserzionista e
+   del pulsante Chiama. Valori ESATTI dal node Figma 461:3835: sfondo
+   #fe9bdd, bordo 1px #77767b, radius 2px (angoli squadrati, NON una
+   pillola come nella versione precedente basata su uno screenshot). */
 .toplist-card__toplist-flag {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #ffade2;
-  border: 2px solid #000;
-  border-radius: 9999px;
-  padding: 3px 10px;
+  background: #fe9bdd;
+  border: 1px solid #77767b;
+  border-radius: 2px;
+  padding: 3px 9px;
   font-size: 10px;
   font-weight: 700;
-  color: #000;
+  color: #1a1c1c;
 }
 
 /* Cuoricino preferiti: vuoto/outline di default, si tinge di rosa già al
@@ -390,21 +393,23 @@
   align-items: center;
   gap: 8px;
   padding: 9px 25px;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid var(--toplist-border);
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 400;
   color: var(--toplist-text);
   cursor: pointer;
 }
 
-/* Pulsante Chiama: stesso trattamento "chip rosa + bordo nero" richiesto
-   per nome inserzionista e badge TOPLIST — coerenza visiva tra i 3
-   elementi "dato catturato in evidenza" della card. */
+/* Pulsante Chiama: stesso trattamento "chip rosa" di nome inserzionista e
+   badge TOPLIST. Valori ESATTI dal node Figma 409:4560: sfondo #fe9bdd,
+   bordo 1px #77767b, radius 2px, testo regular (non bold) — la versione
+   precedente (bordo nero 2px, radius 8px, testo bold) era basata solo su
+   uno screenshot, questi sono i valori confermati dal file Figma. */
 .toplist-card__contact-button--call {
-  background: #ffade2;
-  border: 2px solid #000;
-  color: #000;
+  background: #fe9bdd;
+  border: 1px solid #77767b;
+  color: #1a1c1c;
 }
 
 /* Pulsante WhatsApp: stesso trattamento (verde brand + icona ufficiale)
