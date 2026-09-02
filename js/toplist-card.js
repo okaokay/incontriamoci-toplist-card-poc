@@ -114,10 +114,13 @@
 
      SCHEMA DATI — campi che la card legge (vedi README per il dettaglio
      completo pensato per l'integrazione Laravel):
-       - Campi diretti annuncio: id, isNew, age, videoCount, photoCount,
-         priceTier ("€"|"€€"|"€€€"), title, description, photos[] (qui solo
-         un conteggio, in produzione sarà l'array di URL vero e proprio),
-         stats { followers, reactions, saved, reviews, donations }
+       - Campi diretti annuncio: id, name (nome/nickname pubblico
+         dell'inserzionista — mancava nella prima versione della card,
+         segnalato dal cliente: senza non si capisce DI CHI è l'annuncio),
+         isNew, age, videoCount, photoCount, priceTier ("€"|"€€"|"€€€"),
+         title, description, photos[] (qui solo un conteggio, in
+         produzione sarà l'array di URL vero e proprio), stats
+         { followers, reactions, saved, reviews, donations }
        - Flag dal FUTURO pannello opzioni "In risalto" (sola lettura qui,
          vedi punto 1 sopra e README): isToplist, isBordo + coloreBordo,
          isDisponibileSubito, isOnlineOra, isRispondoSubito
@@ -125,6 +128,7 @@
   var MOCK_LISTINGS = [
     {
       id: "listing-1",
+      name: "Sofia",
       isNew: true,
       age: 24,
       videoCount: 1,
@@ -143,6 +147,7 @@
     },
     {
       id: "listing-2",
+      name: "Martina",
       isNew: false,
       age: 29,
       videoCount: 0,
@@ -161,6 +166,7 @@
     },
     {
       id: "listing-3",
+      name: "Giada",
       isNew: false,
       age: 31,
       videoCount: 2,
@@ -224,9 +230,15 @@
     return (
       '<div class="toplist-card" data-listing-id="' + listing.id + '"' + borderStyle + '>' +
 
-        /* ---- Header: badge NEW/età/video/foto/prezzo + badge di stato + TOPLIST/preferiti ---- */
+        /* ---- Header: nome inserzionista + badge NEW/età/video/foto/prezzo + badge di stato + TOPLIST/preferiti ----
+           Il nome è il PRIMO elemento, prima ancora del badge NEW: è il
+           dato più importante dell'header (senza, non si capisce di chi
+           è l'annuncio) — segnalato dal cliente, mancava nella prima
+           versione della card (il node Figma 409:4482 non lo includeva
+           nell'header, solo un placeholder di titolo nel corpo). */
         '<div class="toplist-card__header">' +
           '<div class="toplist-card__header-left">' +
+            '<span class="toplist-card__name">' + listing.name + "</span>" +
             newBadgeHtml +
             '<span class="toplist-card__meta">Età: ' + listing.age + "</span>" +
             '<span class="toplist-card__meta toplist-card__meta--icon">' + ICON_VIDEO + "<span>" + listing.videoCount + "</span></span>" +

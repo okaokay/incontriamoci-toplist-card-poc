@@ -71,6 +71,15 @@
   flex-wrap: wrap;
 }
 
+/* Nome inserzionista: primo elemento dell'header, il più prominente
+   (font-size maggiore degli altri metadati) — è il dato che identifica
+   l'annuncio, deve risaltare più di età/video/foto/prezzo. */
+.toplist-card__name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--toplist-text);
+}
+
 .toplist-card__new-badge {
   background: #eee;
   border: 1px solid var(--toplist-border);

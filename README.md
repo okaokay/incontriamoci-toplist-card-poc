@@ -94,7 +94,11 @@ componenti separati).
 ## Schema dati — cosa la card si aspetta di ricevere
 
 **Campi diretti dell'annuncio:**
-`id`, `is_new`, `age`, `video_count`, `photo_count`, `price_tier`
+`id`, `name` (nome/nickname pubblico dell'inserzionista — **aggiunto dopo
+la prima versione**, segnalato dal cliente come dato mancante: il node
+Figma 409:4482 non lo includeva nell'header, solo un placeholder di titolo
+nel corpo; qui è il primo elemento in alto a sinistra, prima del badge
+NEW), `is_new`, `age`, `video_count`, `photo_count`, `price_tier`
 (`"€"`/`"€€"`/`"€€€"`), `title`, `description`, `photos[]` (qui solo un
 conteggio per il contatore del carosello; in produzione sarà l'array reale
 di URL foto — la prima è quella scelta come anteprima, sezione 6.3 della
