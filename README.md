@@ -13,9 +13,16 @@ proprio push, così il senior può montarli sullo staging uno alla volta senza
 dipendenze incrociate nel repository.
 
 Stack: **Bootstrap 3.4.1** (solo CSS, per il grid) + **jQuery 3.7.1** +
-**Font Awesome Free 6.7.2** (icone frecce carosello, SVG inline) — stesso
-approccio già validato nel componente slider vetrine. 100% offline, nessun
-CDN.
+icone SVG inline (frecce carosello + riga statistiche footer). 100% offline,
+nessun CDN.
+
+**Icone della riga statistiche footer** (Followers/Reazioni/Preferiti/
+Recensioni/Donazioni): sono i path ESATTI esportati dal node Figma
+`516:9277`, non un'approssimazione — l'unica eccezione è "Reazioni", che
+nel mockup non è un'icona ma testo emoji (`🖤😐`), riportato identico. Le
+frecce del carosello restano Font Awesome Free 6.7.2 (stesso approccio
+validato nello slider vetrine), dato che il node della card non specifica
+un'icona diversa per quelle.
 
 ## Come aprirlo
 
@@ -47,7 +54,7 @@ incontriamoci-toplist-card-poc/
   badge di stato dinamici (ONLINE ORA / DISPONIBILE ORA / RISPONDO SUBITO,
   mostrati solo se il relativo flag è attivo), stella "TOPLIST" + cuore
   preferiti, carosello foto con frecce e contatore posizione, titolo e
-  descrizione, riga statistiche cliccabile, pulsanti Chiama/Messaggio.
+  descrizione, riga statistiche cliccabile, pulsanti Chiama/WhatsApp.
 - **Bordo colorato**: se `is_bordo` è attivo, la card mostra un bordo del
   colore scelto (palette fissa a 9 colori, sezione 6.2.2 della doc).
 - **5 modali di dettaglio**: cliccando un contatore nel footer (Followers,
@@ -123,6 +130,14 @@ documentazione/screenshot del cliente prevale sul wireframe Figma quando i
 due non coincidono). **ONLINE ORA** resta grigio scuro con pallino, l'unico
 dei tre badge che nel mockup ha già un colore "risolto" e coerente con lo
 stesso badge del componente vetrine.
+
+## Pulsante WhatsApp invece di "Message"
+
+Il mockup Figma (`409:4482`) mostra un generico pulsante "Message"; su
+richiesta esplicita è stato sostituito con un pulsante **WhatsApp** —
+stessa icona ufficiale e stesso verde brand (`#25d366`) già usati nel
+pulsante WhatsApp del componente slider vetrine, per coerenza visiva tra i
+due componenti del sito.
 
 ## Note per l'integrazione futura in Laravel
 

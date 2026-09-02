@@ -266,7 +266,7 @@
   color: var(--toplist-text-muted);
 }
 
-/* ---- 2.3) Footer: statistiche cliccabili + pulsanti Chiama/Messaggio ----- */
+/* ---- 2.3) Footer: statistiche cliccabili + pulsanti Chiama/WhatsApp ----- */
 .toplist-card__footer {
   display: flex;
   align-items: center;
@@ -306,6 +306,13 @@
   color: #000;
 }
 
+/* Reazioni: l'icona è emoji testuale ("🖤😐"), non un SVG — le diamo una
+   dimensione leggermente più piccola del default del font per restare
+   visivamente in linea con le icone SVG delle altre statistiche. */
+.toplist-card__stat-value--emoji {
+  font-size: 14px;
+}
+
 .toplist-card__stat-label {
   font-size: 13px;
   color: var(--toplist-text-muted);
@@ -336,8 +343,13 @@
   background: var(--toplist-bg);
 }
 
-.toplist-card__contact-button--message {
-  background: #e8e8e8;
+/* Pulsante WhatsApp: stesso trattamento (verde brand + icona ufficiale)
+   già validato nel componente slider vetrine — coerenza tra i componenti
+   del sito. Sostituisce il generico "Message" del mockup Figma 409:4482. */
+.toplist-card__contact-button--whatsapp {
+  background: #25d366;
+  border-color: #25d366;
+  color: #fff;
 }
 
 /* ============================================================================

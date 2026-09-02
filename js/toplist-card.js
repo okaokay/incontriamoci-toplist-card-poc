@@ -3,7 +3,7 @@
    Riferimento Figma: node 409:4482 ("Toplist Item 1"). Card annuncio in
    evidenza a pagamento: badge di stato, carosello foto, titolo/descrizione,
    riga statistiche cliccabile (apre le modali di stat-detail-modal.js) e
-   pulsanti Chiama/Messaggio.
+   pulsanti Chiama/WhatsApp.
 
    File autonomo, dipende solo da jQuery + StatDetailModal (vedi
    stat-detail-modal.js, caricato prima di questo in index.html).
@@ -17,9 +17,12 @@
      Stesso approccio già validato nello slider vetrine: le icone sono
      inline invece che <img src="..."> così ereditano il colore del testo
      circostante via CSS, senza bisogno di più varianti dello stesso file.
-     I path sono quelli esportati dal node Figma 409:4482 (vedi
-     img/icons/*.svg per le fonti originali, tenute anche come file per
-     riferimento/riuso in altri contesti).
+     Le icone dell'header/carosello (video, foto, stella TOPLIST, cuore
+     preferiti) sono quelle del node Figma 409:4482; quelle della riga
+     statistiche footer (Followers/Preferiti/Recensioni/Donazioni) sono
+     quelle ESATTE del node 516:9277 mostrato dal cliente — vedi
+     img/icons/*.svg per le fonti originali di entrambi i node, tenute
+     anche come file per riferimento/riuso in altri contesti.
      -------------------------------------------------------------------- */
   var ICON_VIDEO =
     '<svg viewBox="0 0 13.3333 10.6667" width="13" height="11" fill="currentColor" aria-hidden="true">' +
@@ -43,24 +46,38 @@
   var ICON_ARROW_RIGHT =
     '<svg viewBox="0 0 320 512" width="10" height="14" fill="currentColor" aria-hidden="true">' +
     '<path d="M310.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-192 192c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L242.7 256 73.4 86.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l192 192z"/></svg>';
+  /* Icone della riga statistiche footer: PATH ESATTI esportati dal node
+     Figma 516:9277 (quello mostrato dal cliente, non un'approssimazione).
+     "Reazioni" nel mockup non è un'icona SVG ma testo emoji ("🖤😐"), gestito
+     a parte più sotto (vedi buildCardHtml). */
   var ICON_FOLLOWERS =
-    '<svg viewBox="0 0 14.6667 10.6667" width="15" height="11" fill="currentColor" aria-hidden="true">' +
-    '<path d="M10 5.33333C10.7333 5.33333 11.3611 5.07222 11.8833 4.55C12.4056 4.02778 12.6667 3.4 12.6667 2.66667C12.6667 1.93333 12.4056 1.30556 11.8833 0.783333C11.3611 0.261111 10.7333 0 10 0C9.26667 0 8.63889 0.261111 8.11667 0.783333C7.59444 1.30556 7.33333 1.93333 7.33333 2.66667C7.33333 3.4 7.59444 4.02778 8.11667 4.55C8.63889 5.07222 9.26667 5.33333 10 5.33333V5.33333M4.66667 5.33333C5.31111 5.33333 5.86111 5.10556 6.31667 4.65C6.77222 4.19444 7 3.64444 7 3C7 2.35556 6.77222 1.80556 6.31667 1.35C5.86111 0.894444 5.31111 0.666667 4.66667 0.666667C4.02222 0.666667 3.47222 0.894444 3.01667 1.35C2.56111 1.80556 2.33333 2.35556 2.33333 3C2.33333 3.64444 2.56111 4.19444 3.01667 4.65C3.47222 5.10556 4.02222 5.33333 4.66667 5.33333V5.33333M10 6.66667C9.44444 6.66667 8.85278 6.72778 8.225 6.85C7.59722 6.97222 6.98889 7.14444 6.4 7.36667C6.63333 7.6 6.81944 7.85 6.95833 8.125C7.09722 8.4 7.16667 8.7 7.16667 9V10.6667H14.6667V9C14.6667 8.06667 14.1806 7.30556 13.2083 6.71667C12.2361 6.12778 11.0889 5.83333 9.76667 5.83333C9.79444 5.98889 9.81944 6.14444 9.84167 6.3C9.86389 6.45556 9.87778 6.6 9.88333 6.73333C9.92222 6.71111 9.96111 6.69444 10 6.68333V6.66667Z"/></svg>';
-  var ICON_REACTIONS =
-    '<svg viewBox="0 0 13.3333 12.2333" width="13" height="12" fill="currentColor" aria-hidden="true">' +
-    '<path d="M6.66667 12.2333L5.86667 11.5C5.03333 10.7444 4.34722 10.0972 3.80833 9.55833C3.26944 9.01944 2.83889 8.53611 2.51667 8.10833C2.19444 7.68056 1.96667 7.28333 1.83333 6.91667C1.7 6.55 1.63333 6.17778 1.63333 5.8C1.63333 5.03333 1.89167 4.39444 2.40833 3.88333C2.925 3.37222 3.56667 3.11667 4.33333 3.11667C4.76667 3.11667 5.17778 3.20556 5.56667 3.38333C5.95556 3.56111 6.28889 3.81111 6.56667 4.13333C6.84444 3.81111 7.17778 3.56111 7.56667 3.38333C7.95556 3.20556 8.36667 3.11667 8.8 3.11667C9.56667 3.11667 10.2083 3.37222 10.725 3.88333C11.2417 4.39444 11.5 5.03333 11.5 5.8C11.5 6.17778 11.4333 6.55 11.3 6.91667C11.1667 7.28333 10.9389 7.68056 10.6167 8.10833C10.2944 8.53611 9.86389 9.01944 9.325 9.55833C8.78611 10.0972 8.1 10.7444 7.26667 11.5L6.66667 12.2333Z"/></svg>';
+    '<svg viewBox="0 0 20.1666 12.8334" width="15" height="10" fill="currentColor" aria-hidden="true">' +
+    '<path d="M13.75 5.49997C15.2716 5.49997 16.4908 4.27167 16.4908 2.75C16.4908 1.22834 15.2716 0 13.75 0C12.2283 0 11 1.22834 11 2.75C11 4.27167 12.2283 5.49997 13.75 5.49997ZM6.41666 5.49997C7.93833 5.49997 9.15753 4.27167 9.15753 2.75C9.15753 1.22834 7.93833 0 6.41666 0C4.895 0 3.66666 1.22834 3.66666 2.75C3.66666 4.27167 4.895 5.49997 6.41666 5.49997ZM6.41666 7.33337C4.28083 7.33337 0 8.40587 0 10.5417V12.8334H12.8333V10.5417C12.8333 8.40587 8.5525 7.33337 6.41666 7.33337ZM13.75 7.33337C13.4841 7.33337 13.1816 7.35167 12.8608 7.37917C13.9241 8.14917 14.6666 9.18497 14.6666 10.5417V12.8334H20.1666V10.5417C20.1666 8.40587 15.8858 7.33337 13.75 7.33337Z"/></svg>';
   var ICON_SAVED =
-    '<svg viewBox="0 0 9.33333 12" width="9" height="12" fill="currentColor" aria-hidden="true">' +
-    '<path d="M0 12V1.33333C0 0.966667 0.130556 0.652778 0.391667 0.391667C0.652778 0.130556 0.966667 0 1.33333 0H8C8.36667 0 8.68056 0.130556 8.94167 0.391667C9.20278 0.652778 9.33333 0.966667 9.33333 1.33333V12L4.66667 10L0 12Z"/></svg>';
+    '<svg viewBox="0 0 18.3334 16.8208" width="14" height="13" fill="currentColor" aria-hidden="true">' +
+    '<path d="M9.16667 16.8208L7.8375 15.6108C3.11667 11.33 0 8.5067 0 5.04167C0 2.21833 2.21834 0 5.04167 0C6.63667 0 8.16747 0.7425 9.16667 1.91583C10.1659 0.7425 11.6967 0 13.2917 0C16.115 0 18.3334 2.21833 18.3334 5.04167C18.3334 8.5067 15.2167 11.33 10.4959 15.62L9.16667 16.8208Z"/></svg>';
+  var ICON_REVIEWS_OUTLINE =
+    '<svg viewBox="0 0 18.3334 17.435" width="14" height="14" fill="currentColor" aria-hidden="true">' +
+    '<path d="M9.16667 0L11.9992 5.73834L18.3334 6.66417L13.75 11.1284L14.8317 17.435L9.16667 14.4559L3.50167 17.435L4.58334 11.1284L0 6.66417L6.33417 5.73834L9.16667 0Z"/></svg>';
   var ICON_DONATIONS =
-    '<svg viewBox="0 0 13.3333 12.6667" width="13" height="13" fill="currentColor" aria-hidden="true">' +
-    '<path d="M1.33333 10V11.3333H12V10H1.33333M1.33333 2.66667H2.8C2.74444 2.56667 2.70833 2.46111 2.69167 2.35C2.675 2.23889 2.66667 2.12222 2.66667 2C2.66667 1.44444 2.86111 0.972222 3.25 0.583333C3.63889 0.194444 4.11111 0 4.66667 0C5 0 5.30833 0.0861111 5.59167 0.258333C5.875 0.430556 6.12222 0.644444 6.33333 0.9L6.66667 1.33333L7 0.9C7.2 0.633333 7.44444 0.416667 7.73333 0.25C8.02222 0.0833333 8.33333 0 8.66667 0C9.22222 0 9.69444 0.194444 10.0833 0.583333C10.4722 0.972222 10.6667 1.44444 10.6667 2C10.6667 2.12222 10.6583 2.23889 10.6417 2.35C10.625 2.46111 10.5889 2.56667 10.5333 2.66667H12C12.3667 2.66667 12.6806 2.79722 12.9417 3.05833C13.2028 3.31944 13.3333 3.63333 13.3333 4V11.3333C13.3333 11.7 13.2028 12.0139 12.9417 12.275C12.6806 12.5361 12.3667 12.6667 12 12.6667H1.33333C0.966667 12.6667 0.652778 12.5361 0.391667 12.275C0.130556 12.0139 0 11.7 0 11.3333V4C0 3.63333 0.130556 3.31944 0.391667 3.05833C0.652778 2.79722 0.966667 2.66667 1.33333 2.66667M1.33333 8H12V4H8.6L10 5.9L8.93333 6.66667L6.66667 3.6L4.4 6.66667L3.33333 5.9L4.7 4H1.33333V8Z"/></svg>';
+    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M7.33333 10H8.66667C9.02029 10 9.35943 9.85952 9.60948 9.60948C9.85952 9.35943 10 9.02029 10 8.66667C10 8.31304 9.85952 7.97391 9.60948 7.72386C9.35943 7.47381 9.02029 7.33333 8.66667 7.33333H6.66667C6.26667 7.33333 5.93333 7.46667 5.73333 7.73333L2 11.3333"/>' +
+    '<path d="M4.66667 14L5.73333 13.0667C5.93333 12.8 6.26667 12.6667 6.66667 12.6667H9.33333C10.0667 12.6667 10.7333 12.4 11.2 11.8667L14.2667 8.93333C14.5239 8.69022 14.6741 8.35486 14.6841 8.00105C14.6941 7.64723 14.5631 7.30393 14.32 7.04667C14.0769 6.78941 13.7415 6.63926 13.3877 6.62926C13.0339 6.61926 12.6906 6.75022 12.4333 6.99333L9.63333 9.59333"/>' +
+    '<path d="M1.33333 10.6667L5.33333 14.6667"/>' +
+    '<path d="M10.6667 7.93333C11.7344 7.93333 12.6 7.06775 12.6 6C12.6 4.93225 11.7344 4.06667 10.6667 4.06667C9.59892 4.06667 8.73333 4.93225 8.73333 6C8.73333 7.06775 9.59892 7.93333 10.6667 7.93333Z"/>' +
+    '<path d="M4 5.33333C5.10457 5.33333 6 4.4379 6 3.33333C6 2.22876 5.10457 1.33333 4 1.33333C2.89543 1.33333 2 2.22876 2 3.33333C2 4.4379 2.89543 5.33333 4 5.33333Z"/></svg>';
   var ICON_CALL =
     '<svg viewBox="0 0 15 15" width="15" height="15" fill="currentColor" aria-hidden="true">' +
     '<path d="M14.125 15C12.3889 15 10.6736 14.6215 8.97917 13.8646C7.28472 13.1076 5.74306 12.0347 4.35417 10.6458C2.96528 9.25694 1.89236 7.71528 1.13542 6.02083C0.378472 4.32639 0 2.61111 0 0.875C0 0.625 0.0833333 0.416667 0.25 0.25C0.416667 0.0833333 0.625 0 0.875 0H4.25C4.44444 0 4.61806 0.0659722 4.77083 0.197917C4.92361 0.329861 5.01389 0.486111 5.04167 0.666667L5.58333 3.58333C5.61111 3.80556 5.60417 3.99306 5.5625 4.14583C5.52083 4.29861 5.44444 4.43056 5.33333 4.54167L3.3125 6.58333C3.59028 7.09722 3.92014 7.59375 4.30208 8.07292C4.68403 8.55208 5.10417 9.01389 5.5625 9.45833C5.99306 9.88889 6.44444 10.2882 6.91667 10.6562C7.38889 11.0243 7.88889 11.3611 8.41667 11.6667L10.375 9.70833C10.5 9.58333 10.6632 9.48958 10.8646 9.42708C11.066 9.36458 11.2639 9.34722 11.4583 9.375L14.3333 9.95833C14.5278 10.0139 14.6875 10.1146 14.8125 10.2604C14.9375 10.4063 15 10.5694 15 10.75V14.125C15 14.375 14.9167 14.5833 14.75 14.75C14.5833 14.9167 14.375 15 14.125 15Z"/></svg>';
-  var ICON_MESSAGE =
-    '<svg viewBox="0 0 16.6667 16.6667" width="17" height="17" fill="currentColor" aria-hidden="true">' +
-    '<path d="M3.33333 10H10V8.33333H3.33333V10M3.33333 7.5H13.3333V5.83333H3.33333V7.5M3.33333 5H13.3333V3.33333H3.33333V5M0 16.6667V1.66667C0 1.20833 0.163194 0.815972 0.489583 0.489583C0.815972 0.163194 1.20833 0 1.66667 0H15C15.4583 0 15.8507 0.163194 16.1771 0.489583C16.5035 0.815972 16.6667 1.20833 16.6667 1.66667V11.6667C16.6667 12.125 16.5035 12.5174 16.1771 12.8438C15.8507 13.1701 15.4583 13.3333 15 13.3333H3.33333L0 16.6667Z"/></svg>';
+  /* Icona WhatsApp: logo ufficiale (path standard, licenza MIT via
+     simple-icons), STESSA icona già usata per il pulsante WhatsApp dello
+     slider vetrine — coerenza tra i componenti del sito. */
+  var ICON_WHATSAPP =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">' +
+    '<path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.888 11.888 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413"/>' +
+    "</svg>";
+  /* Reazioni: emoji, non SVG (esattamente come nel mockup Figma 516:9277) */
+  var ICON_REACTIONS_EMOJI = "🖤😐";
 
   /* --------------------------------------------------------------------
      1) PALETTE COLORI BORDO (Figma doc, sezione 6.2.2)
@@ -232,7 +249,7 @@
           "</a>" +
         "</div>" +
 
-        /* ---- Footer: 5 contatori cliccabili (aprono le modali) + pulsanti Chiama/Messaggio ---- */
+        /* ---- Footer: 5 contatori cliccabili (aprono le modali) + pulsanti Chiama/WhatsApp ---- */
         '<div class="toplist-card__footer">' +
           '<div class="toplist-card__stats">' +
             '<button type="button" class="toplist-card__stat" data-stat-type="followers">' +
@@ -240,7 +257,7 @@
               '<span class="toplist-card__stat-label">Followers</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="reactions">' +
-              '<span class="toplist-card__stat-value">' + ICON_REACTIONS + "<b>" + listing.stats.reactions + "</b></span>" +
+              '<span class="toplist-card__stat-value toplist-card__stat-value--emoji">' + ICON_REACTIONS_EMOJI + "<b>" + listing.stats.reactions + "</b></span>" +
               '<span class="toplist-card__stat-label">Reactions</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="saved">' +
@@ -248,7 +265,7 @@
               '<span class="toplist-card__stat-label">Saved</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="reviews">' +
-              '<span class="toplist-card__stat-value">' + ICON_STAR + "<b>" + listing.stats.reviews + "</b></span>" +
+              '<span class="toplist-card__stat-value">' + ICON_REVIEWS_OUTLINE + "<b>" + listing.stats.reviews + "</b></span>" +
               '<span class="toplist-card__stat-label">Reviews</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="donations">' +
@@ -258,7 +275,7 @@
           "</div>" +
           '<div class="toplist-card__contact-actions">' +
             '<button type="button" class="toplist-card__contact-button toplist-card__contact-button--call">' + ICON_CALL + "<span>Chiama</span></button>" +
-            '<button type="button" class="toplist-card__contact-button toplist-card__contact-button--message">' + ICON_MESSAGE + "<span>Messaggio</span></button>" +
+            '<button type="button" class="toplist-card__contact-button toplist-card__contact-button--whatsapp">' + ICON_WHATSAPP + "<span>WhatsApp</span></button>" +
           "</div>" +
         "</div>" +
 
