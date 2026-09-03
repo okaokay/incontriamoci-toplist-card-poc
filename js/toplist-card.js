@@ -1,10 +1,14 @@
 /* ============================================================================
    TOPLIST CARD — jQuery Plugin ($.fn.toplistCard)
-   Riferimento Figma: node 409:4482 ("Toplist Item 1", desktop) e nodi
-   333:2882/596:12483 (variante mobile, senza/con pulsante Telegram). Card
-   annuncio in evidenza a pagamento: badge di stato, carosello foto,
-   titolo/descrizione, riga statistiche cliccabile (apre le modali di
-   stat-detail-modal.js) e pulsanti Chiama/WhatsApp(/Telegram su mobile).
+   Riferimento Figma: node 409:4482 ("Toplist Item 1", desktop) e node
+   691:927 (card mobile, iPhone SE 390px/card 360px) — nodi 333:2882/
+   596:12483 sono i frame mobile precedenti, superati da 691:927 ma
+   ancora validi come riferimento per la variante con/senza pulsante
+   Telegram (vedi ICON_TELEGRAM e "telegram" nello schema dati più sotto).
+   Card annuncio in evidenza a pagamento: badge di stato, carosello foto
+   (con swipe su mobile), titolo/descrizione, riga statistiche cliccabile
+   (apre le modali di stat-detail-modal.js) e pulsanti Chiama/WhatsApp
+   (+Telegram su mobile, condizionale).
 
    File autonomo, dipende solo da jQuery + StatDetailModal (vedi
    stat-detail-modal.js, caricato prima di questo in index.html). Stesso
@@ -513,26 +517,6 @@
      Pulsante Telegram: presente SOLO se "listing.telegram" è valorizzato
      — con 2 CTA i pulsanti occupano metà larghezza ciascuno, con 3 CTA
      un terzo (flex:1 0 0 in CSS, nessun calcolo nel JS). */
-  /* Avanza/arretra il contatore "N/tot" di un carosello foto di una
-     posizione, con clamp ai bordi (non supera mai 1 o il totale).
-     Condivisa tra il click sulle frecce e lo swipe touch/mouse (vedi
-     bindEvents, sezione CAROSELLO FOTO): stessa identica logica, cambia
-     solo COSA la richiama. */
-  function stepCarouselCounter($media, direction) {
-    var $counter = $media.find(".toplist-card__photo-counter");
-    var parts = $counter.text().split("/");
-    var current = parseInt(parts[0], 10);
-    var total = parseInt(parts[1], 10);
-
-    if (direction === "next") {
-      current = Math.min(total, current + 1);
-    } else {
-      current = Math.max(1, current - 1);
-    }
-
-    $counter.text(current + "/" + total);
-  }
-
   function buildMobileStatusBadgesHtml(listing) {
     var html = "";
     if (listing.isDisponibileSubito) {
@@ -646,6 +630,26 @@
 
       "</div>"
     );
+  }
+
+  /* Avanza/arretra il contatore "N/tot" di un carosello foto di una
+     posizione, con clamp ai bordi (non supera mai 1 o il totale).
+     Condivisa da bindEvents() tra il click sulle frecce e lo swipe
+     touch/mouse sulla galleria mobile: stessa identica logica, cambia
+     solo COSA la richiama. */
+  function stepCarouselCounter($media, direction) {
+    var $counter = $media.find(".toplist-card__photo-counter");
+    var parts = $counter.text().split("/");
+    var current = parseInt(parts[0], 10);
+    var total = parseInt(parts[1], 10);
+
+    if (direction === "next") {
+      current = Math.min(total, current + 1);
+    } else {
+      current = Math.max(1, current - 1);
+    }
+
+    $counter.text(current + "/" + total);
   }
 
   /* --------------------------------------------------------------------

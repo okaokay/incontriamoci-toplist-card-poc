@@ -3,8 +3,9 @@
   ============================================================================
   PROVA TECNICA — CARD TOPLIST + MODALI DI DETTAGLIO
   Riferimento design: Figma "Incontriamoci", node 409:4482 ("Toplist Item 1")
-  per la card, e nodi 479:13268 / 479:13332 / 479:13408 / 479:13460 / 479:13528
-  per le 5 modali di dettaglio (Follower, Reazioni, Preferiti, Recensioni,
+  per la card desktop, node 691:927 per la card mobile, e nodi
+  479:13268 / 479:13332 / 479:13408 / 479:13460 / 479:13528 per le 5
+  modali di dettaglio (Follower, Reazioni, Preferiti, Recensioni,
   Donazioni) — vedi documento Incontriamoci_Documentazione_Funzionalita.docx,
   sezioni 6 e 7.
 
@@ -44,12 +45,21 @@
       commenti nel file JS). In produzione l'array arriverà da Laravel
       (Blade o AJAX), la struttura del componente non cambia.
 
-      Struttura di OGNI card (classi CSS, vedi style.css):
-        .toplist-card                    -> riga esterna (bordo colorato se is_bordo)
+      Ogni annuncio genera DUE template affiancati nel DOM (uno visibile
+      alla volta via CSS in base alla larghezza, vedi style.css sezione 3):
+
+        .toplist-card                    -> template DESKTOP (bordo colorato se is_bordo)
           .toplist-card__header          -> nome/età/video/foto/prezzo + badge di stato + TOPLIST/preferiti
           .toplist-card__media           -> foto con carosello (frecce + contatore N/tot)
-          .toplist-card__body            -> titolo + descrizione (link all'annuncio)
+          .toplist-card__body            -> titolo + descrizione (link al profilo)
           .toplist-card__footer          -> 5 contatori cliccabili (aprono le modali) + pulsanti Chiama/WhatsApp
+
+        .toplist-card-mobile             -> template MOBILE, sotto i 768px (Figma node 691:927)
+          .toplist-card-mobile__chips    -> nome/età/video/foto + cuoricino preferiti
+          .toplist-card-mobile__media    -> stessa foto/carosello del desktop, + swipe touch
+          .toplist-card-mobile__status-row -> badge di stato (stessi colori del desktop)
+          .toplist-card-mobile__body     -> titolo + descrizione (link al profilo)
+          .toplist-card-mobile__stats    -> 5 contatori + pulsanti Chiama/Telegram/WhatsApp
       ==========================================================================
     -->
     <div id="toplistList">

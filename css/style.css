@@ -523,7 +523,7 @@
    sopra il bordo — nelle due versioni Figma precedenti (333:2882/
    596:12483) il TOPLIST stava a destra da solo e gli altri badge di
    stato in un secondo gruppo flottante; qui quel gruppo è in flusso
-   normale (vedi 3.4) e SOLO il prezzo si affianca al TOPLIST in questo
+   normale (vedi 3.5) e SOLO il prezzo si affianca al TOPLIST in questo
    contenitore flottante, su richiesta esplicita del cliente. Il
    contenitore ("top-float") porta il position:absolute, i due badge al
    suo interno sono normali elementi di flusso (flex) — nessun rischio di
@@ -554,6 +554,26 @@
   font-weight: 700;
   color: #1a1c1c;
   text-transform: uppercase;
+  white-space: nowrap;
+}
+/* Sfondo nero + testo rosa (#fe9bdd, lo stesso rosa del badge TOPLIST e
+   del resto della palette del componente): colori su richiesta esplicita
+   del cliente, non i grigi del mockup Figma statico. */
+.toplist-card-mobile__price-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: #000;
+  border-radius: 9px;
+  padding: 3px 10px;
+  /* Il node Figma usa "JetBrains Mono": font non garantito sui device dei
+     clienti, quindi usiamo il font di sistema (come gli altri badge) con
+     un filo di letter-spacing per mantenere l'effetto "a scatti" senza
+     dipendere da un webfont non incluso nel progetto. */
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #fe9bdd;
   white-space: nowrap;
 }
 
@@ -590,46 +610,6 @@
 .toplist-card-mobile__separator {
   border-top: 1px solid #e5e7eb;
   width: 100%;
-}
-
-/* ---- 3.4) Riga badge di stato, sotto la galleria -------------------------
-   Diversamente dalle versioni Figma precedenti, QUI questi badge non sono
-   più "flottanti" (position:absolute) ma un elemento di flusso normale
-   tra galleria e titolo — "flex-wrap:wrap" basta da solo a gestire
-   qualunque larghezza di schermo, senza bisogno di scroll orizzontale
-   "di ripiego" come nella versione precedente. Il badge prezzo NON sta
-   più qui: su richiesta del cliente si è spostato accanto al TOPLIST nel
-   gruppo flottante in alto (vedi 3.2).
-
-   COLORI: confermato dal cliente — GLI STESSI colori del desktop
-   (verde/blu/rosa), quindi qui riusiamo le classi ".toplist-badge*" già
-   definite per il desktop (sezione 2.1) invece di classi dedicate. */
-.toplist-card-mobile__status-row {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
-  width: 100%;
-}
-/* Sfondo nero + testo rosa (#fe9bdd, lo stesso rosa del badge TOPLIST e
-   del resto della palette del componente): colori su richiesta esplicita
-   del cliente, non i grigi del mockup Figma statico. */
-.toplist-card-mobile__price-badge {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  background: #000;
-  border-radius: 9px;
-  padding: 3px 10px;
-  /* Il node Figma usa "JetBrains Mono": font non garantito sui device dei
-     clienti, quindi usiamo il font di sistema (come gli altri badge) con
-     un filo di letter-spacing per mantenere l'effetto "a scatti" senza
-     dipendere da un webfont non incluso nel progetto. */
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: #fe9bdd;
-  white-space: nowrap;
 }
 
 /* ---- 3.4) Galleria foto: stesse frecce/contatore del desktop -----------
@@ -675,6 +655,26 @@
   touch-action: pan-y;
 }
 
+/* ---- 3.5) Riga badge di stato, sotto la galleria -------------------------
+   Diversamente dalle versioni Figma precedenti, QUI questi badge non sono
+   più "flottanti" (position:absolute) ma un elemento di flusso normale
+   tra galleria e titolo — "flex-wrap:wrap" basta da solo a gestire
+   qualunque larghezza di schermo, senza bisogno di scroll orizzontale
+   "di ripiego" come nella versione precedente. Il badge prezzo NON sta
+   più qui: su richiesta del cliente si è spostato accanto al TOPLIST nel
+   gruppo flottante in alto (vedi 3.2).
+
+   COLORI: confermato dal cliente — GLI STESSI colori del desktop
+   (verde/blu/rosa), quindi qui riusiamo le classi ".toplist-badge*" già
+   definite per il desktop (sezione 2.1) invece di classi dedicate. */
+.toplist-card-mobile__status-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
 .toplist-card-mobile__body {
   display: block;
   width: 100%;
@@ -701,7 +701,7 @@
   overflow: hidden;
 }
 
-/* ---- 3.5) Statistiche: 5 colonne con divisori verticali -----------------
+/* ---- 3.6) Statistiche: 5 colonne con divisori verticali -----------------
    Stessa interazione della riga statistiche desktop (".toplist-card__stat",
    click delegato in bindEvents), solo disposizione diversa: colonne
    uguali con bordo verticale tra una e l'altra invece di gap semplice. */
@@ -747,7 +747,7 @@
   color: #9ca3af;
 }
 
-/* ---- 3.6) Pulsanti CTA a tutta larghezza, uguali tra loro ---------------
+/* ---- 3.7) Pulsanti CTA a tutta larghezza, uguali tra loro ---------------
    "flex:1 0 0" su tutti e tre i pulsanti: con 2 CTA (Telegram assente,
    vedi buildMobileCardHtml) occupano metà larghezza ciascuno, con 3 CTA
    un terzo — nessun calcolo di larghezza nel JS, si adatta da solo al
