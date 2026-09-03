@@ -480,12 +480,19 @@
      5. Titolo/descrizione, separatore, statistiche, pulsanti CTA
         (invariati rispetto alla versione precedente).
 
-     COLORI DEI BADGE DI STATO — confermato dal cliente col node Figma
-     691:1021 (il gruppo badge/prezzo isolato): qui la card mobile usa la
-     palette grigia ESATTA del mockup (DISPONIBILE ORA grigio chiaro
-     #e5e7eb, RISPONDO SUBITO/ONLINE grigio medio #9ca3af), DIVERSA dai
-     colori verde/blu/rosa del desktop (".toplist-badge--available" ecc.,
-     vedi buildStatusBadgesHtml) — qui NON riusata, classi dedicate sotto.
+     COLORI DEI BADGE DI STATO — confermato dal cliente: GLI STESSI colori
+     del desktop (verde DISPONIBILE ORA, blu RISPONDO SUBITO, rosa ONLINE
+     ORA con pallino verde pulsante — vedi "Colori dei badge di stato" nel
+     README), NON la palette grigia mostrata dal mockup Figma statico
+     (che resta un placeholder di stile, come già per il resto della
+     card). Qui riusiamo quindi le classi ".toplist-badge*" del desktop
+     (buildStatusBadgesHtml) invece di classi dedicate.
+
+     ATTENZIONE ALLARGHEZZA: l'etichetta del badge online usata QUI è la
+     versione BREVE "ONLINE" (non "ONLINE ORA" come sul desktop) proprio
+     per restare nella larghezza di riga esatta del node Figma (328px su
+     card 360px) e stare su UNA riga sola con gli altri 3 badge, come nel
+     mockup — con "ONLINE ORA" per intero non ci sta e va a capo.
 
      Foto della galleria e titolo sono link a "listing.profileUrl" (pagina
      personale dell'inserzionista, stesso concetto già usato nel
@@ -501,14 +508,13 @@
   function buildMobileStatusBadgesHtml(listing, priceTier) {
     var html = "";
     if (listing.isDisponibileSubito) {
-      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--light">DISPONIBILE ORA</span>';
+      html += '<span class="toplist-badge toplist-badge--available">DISPONIBILE ORA</span>';
     }
     if (listing.isRispondoSubito) {
-      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark">RISPONDO SUBITO</span>';
+      html += '<span class="toplist-badge toplist-badge--fast-reply">RISPONDO SUBITO</span>';
     }
     if (listing.isOnlineOra) {
-      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark">' +
-        '<span class="toplist-card-mobile__online-dot"></span>ONLINE</span>';
+      html += '<span class="toplist-badge toplist-badge--neutral">ONLINE<span class="toplist-badge__dot"></span></span>';
     }
     html += '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>";
     return html;

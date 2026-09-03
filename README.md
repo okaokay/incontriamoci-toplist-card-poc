@@ -439,12 +439,17 @@ erano frame più vecchi, sostituiti da questo.
 
 **Le regole restano identiche tra i due template**: stessi flag letti
 (`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`).
-**I colori dei badge di stato invece sono DIVERSI dal desktop**: qui è
-la palette grigia neutra confermata dal cliente sul node Figma isolato
-`691:1021` (DISPONIBILE ORA grigio chiaro `#e5e7eb`, RISPONDO SUBITO/
-ONLINE grigio medio `#9ca3af`) — non il verde/blu/rosa scelto per il
-desktop (vedi "Colori dei badge di stato" più sopra, che riguarda SOLO
-il template desktop). Stesse 5 statistiche (ordine diverso: Donazioni
+**I colori dei badge di stato sono GLI STESSI del desktop** (verde
+DISPONIBILE ORA, blu RISPONDO SUBITO, rosa ONLINE ORA con pallino verde
+pulsante — vedi "Colori dei badge di stato" più sopra): il template
+mobile riusa le classi `.toplist-badge*` del desktop, non una palette
+dedicata. Il grigio del mockup Figma resta un placeholder di stile, come
+già per il resto della card. Nota sull'etichetta: qui il badge online usa
+il testo breve **"ONLINE"** (non "ONLINE ORA" come sul desktop) — è
+l'unico modo per restare nella larghezza esatta di riga del node Figma
+(`691:1021`, 328px su una card da 360px) e stare su **una riga sola**
+insieme agli altri 3 badge, come nel mockup: con l'etichetta intera non
+ci sta e va a capo. Stesse 5 statistiche (ordine diverso: Donazioni
 prima di Recensioni sul mobile, replica esatta del mockup — le chiavi
 `data-stat-type` restano invariate, quindi `StatDetailModal` non richiede
 nessuna modifica), stessi link Chiama/WhatsApp. Cambia la disposizione
