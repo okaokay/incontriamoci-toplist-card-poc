@@ -467,12 +467,12 @@
    3) RESPONSIVE — card desktop vs card mobile
    Sotto i 768px il layout non è più una versione "compressa" della card
    desktop: è un template HTML del tutto diverso (vedi buildMobileCardHtml
-   in toplist-card.js, Figma node 333:2882/596:12483), generato in
-   parallelo alla card desktop per ogni annuncio e mostrato/nascosto qui
-   in base alla larghezza. Le regole sotto sono quindi solo show/hide,
-   non un adattamento del markup desktop.
+   in toplist-card.js, Figma node 691:927 — iPhone SE 390px, card 360px),
+   generato in parallelo alla card desktop per ogni annuncio e mostrato/
+   nascosto qui in base alla larghezza. Le regole sotto sono quindi solo
+   show/hide, non un adattamento del markup desktop.
    ============================================================================ */
-/* ---- 3.1) Contenitore card mobile (Figma node 333:2882) -----------------
+/* ---- 3.1) Contenitore card mobile (Figma node 691:927) -----------------
    "display:none" di default (visibile SOLO sotto i 768px, vedi la media
    query più sotto): ATTENZIONE, questa è l'UNICA dichiarazione "display"
    per ".toplist-card-mobile" nel file — un secondo blocco di regole per
@@ -494,7 +494,16 @@
   flex-direction: column;
   gap: 12px;
   background: #fff;
-  border: 4px solid #e5e7eb;
+  /* "outline" invece di "border": in Figma lo stroke di un frame NON
+     riduce l'area di contenuto disponibile (a differenza del border CSS
+     con box-sizing:border-box). Con un vero "border" la riga badge di
+     stato (3.4) risultava 320px invece dei 328px esatti del node Figma
+     (360 card - 2×16 padding, IGNORANDO i 2×4 di bordo) — bastava questo
+     per far andare a capo un badge in più del dovuto su schermi stretti.
+     "outline-offset" negativo tiene l'outline visivamente allo stesso
+     posto di un border, ma senza sottrarre spazio al contenuto. */
+  outline: 4px solid #e5e7eb;
+  outline-offset: -4px;
   border-radius: 12px;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   padding: 16px;
@@ -509,62 +518,16 @@
   }
 }
 
-/* ---- 3.2) Badge flottanti sopra il bordo (in alto a sinistra: stato +
-   fascia prezzo; in alto a destra: TOPLIST) -------------------------------
-   IMPORTANTE: la fascia prezzo (priceTier, es. "€€€") sta QUI, insieme a
-   DISPONIBILE ORA/RISPONDO SUBITO — non nella riga di chip nome/età/foto
-   come sul desktop. Valore confermato dal node Figma (gruppo "Toplist
-   Badge" in alto a sinistra contiene sempre e solo questi 3 elementi).
-   I badge di stato riusano ESATTAMENTE ".toplist-badge" (stessi colori
-   già scelti per il desktop, sezione 2.1): stesso significato, stesso
-   colore, cambia solo la posizione. Il badge TOPLIST invece ha uno stile
-   dedicato (sfondo bianco, bordo grigio, testo grigio — diverso dal chip
-   rosa del desktop, valore ESATTO dal node Figma). */
-/* "right: 76px" delimita la larghezza disponibile (spazio riservato al
-   badge TOPLIST a destra, sempre presente): senza un limite di larghezza
-   un elemento position:absolute non va mai a capo da solo, e su schermi
-   stretti (320px) il gruppo di badge finiva silenziosamente FUORI dal
-   bordo della card invece di adattarsi. "overflow-x:auto" con scrollbar
-   nascosta (stesso pattern già usato per l'header della card desktop,
-   vedi ".toplist-card__header") lascia il gruppo su una riga sola e
-   scorrevole invece di andare a capo e rischiare di sovrapporsi alla riga
-   di chip sottostante (che parte subito dopo, vedi 3.1). */
-.toplist-card-mobile__badges-float {
-  position: absolute;
-  left: 8px;
-  right: 76px;
-  top: -14px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  scrollbar-width: none;
-  z-index: 1;
-}
-.toplist-card-mobile__badges-float::-webkit-scrollbar {
-  display: none;
-}
-.toplist-card-mobile__price-badge {
-  display: inline-flex;
-  align-items: center;
-  flex-shrink: 0;
-  background: #d9d9d9;
-  border-radius: 9px;
-  padding: 3px 10px;
-  /* Il node Figma usa "JetBrains Mono": font non garantito sui device dei
-     clienti, quindi usiamo il font di sistema (come gli altri badge) con
-     un filo di letter-spacing per mantenere l'effetto "a scatti" senza
-     dipendere da un webfont non incluso nel progetto. */
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: #000;
-  white-space: nowrap;
-}
+/* ---- 3.2) Badge TOPLIST flottante (in alto a SINISTRA) ------------------
+   Node 691:927 (iPhone SE, card 360px): l'UNICO badge rimasto flottante
+   sopra il bordo è TOPLIST, ora a sinistra — nelle due versioni Figma
+   precedenti (333:2882/596:12483) stava a destra e c'era un secondo
+   gruppo flottante con gli altri badge; qui quel gruppo è stato spostato
+   in flusso normale (vedi 3.4), quindi resta solo questo, piccolo,
+   nessun rischio di overflow su schermi stretti. */
 .toplist-card-mobile__toplist-badge {
   position: absolute;
-  right: 8px;
+  left: 8px;
   top: -14px;
   z-index: 1;
   display: inline-flex;
@@ -582,11 +545,12 @@
   white-space: nowrap;
 }
 
-/* ---- 3.3) Riga di chip (nome/età/video/foto/online) ---------------------
+/* ---- 3.3) Riga di chip (nome/età/video/foto) -----------------------------
    Stessi dati della riga "header-left" desktop, come chip arrotondati
-   invece che testo con separatori — replica il node Figma 333:2882. Il
-   cuoricino preferiti riusa ".toplist-card__favorite" (stessa interazione
-   del desktop, vedi toplist-card.js) spinto a fine riga con margin-left:auto. */
+   invece che testo con separatori. NESSUN badge online qui (si è spostato
+   nella riga 3.4, sotto la galleria) — valore confermato dal node Figma
+   691:927. Il cuoricino preferiti riusa ".toplist-card__favorite" (stessa
+   interazione del desktop) spinto a fine riga con margin-left:auto. */
 .toplist-card-mobile__chips {
   display: flex;
   align-items: center;
@@ -607,24 +571,53 @@
   color: #1f2937;
   white-space: nowrap;
 }
-/* Badge "ONLINE" nella riga di chip: GRIGIO (#9ca3af), valore ESATTO dal
-   node Figma — diverso dal rosa (#ffade2) del badge "ONLINE ORA" della
-   card desktop (".toplist-badge--neutral"), quindi stile dedicato invece
-   di riusare quella classe. */
-.toplist-card-mobile__online-chip {
+.toplist-card-mobile__favorite {
+  margin-left: auto;
+}
+
+.toplist-card-mobile__separator {
+  border-top: 1px solid #e5e7eb;
+  width: 100%;
+}
+
+/* ---- 3.4) Riga badge di stato + prezzo, sotto la galleria ---------------
+   Diversamente dalle versioni Figma precedenti, QUI questi badge non sono
+   più "flottanti" (position:absolute) ma un elemento di flusso normale
+   tra galleria e titolo — "flex-wrap:wrap" basta da solo a gestire
+   qualunque larghezza di schermo, senza bisogno di scroll orizzontale
+   "di ripiego" come nella versione precedente.
+
+   COLORI — grigio neutro, non i verde/blu/rosa del desktop: confermato
+   su TRE frame Figma diversi (333:2882, 596:12483, 691:927), sempre
+   uguale, quindi è la palette reale della card mobile, non un
+   placeholder. Classi dedicate, NON le ".toplist-badge*" del desktop. */
+.toplist-card-mobile__status-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.toplist-card-mobile__status-badge {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   flex-shrink: 0;
-  background: #9ca3af;
   border-radius: 9999px;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   padding: 2px 8px;
   font-size: 10px;
   font-weight: 700;
-  color: #fff;
   text-transform: uppercase;
   white-space: nowrap;
+}
+.toplist-card-mobile__status-badge--light {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+.toplist-card-mobile__status-badge--dark {
+  background: #9ca3af;
+  color: #fff;
 }
 .toplist-card-mobile__online-dot {
   width: 8px;
@@ -633,13 +626,22 @@
   background: #000;
   border: 1px solid #fff;
 }
-.toplist-card-mobile__favorite {
-  margin-left: auto;
-}
-
-.toplist-card-mobile__separator {
-  border-top: 1px solid #e5e7eb;
-  width: 100%;
+.toplist-card-mobile__price-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: #d9d9d9;
+  border-radius: 9px;
+  padding: 3px 10px;
+  /* Il node Figma usa "JetBrains Mono": font non garantito sui device dei
+     clienti, quindi usiamo il font di sistema (come gli altri badge) con
+     un filo di letter-spacing per mantenere l'effetto "a scatti" senza
+     dipendere da un webfont non incluso nel progetto. */
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #000;
+  white-space: nowrap;
 }
 
 /* ---- 3.4) Galleria foto: riquadro singolo con icona, no carosello -------

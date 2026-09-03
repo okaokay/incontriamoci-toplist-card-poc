@@ -314,10 +314,11 @@
     return html;
   }
 
-  /* Solo DISPONIBILE ORA/RISPONDO SUBITO, senza ONLINE ORA: nella card
-     mobile "ONLINE" è già mostrato come chip nella riga nome/età/foto
-     (vedi buildMobileCardHtml) — ripeterlo anche nei badge flottanti in
-     alto affollerebbe inutilmente lo spazio stretto sopra il bordo. */
+  /* Solo DISPONIBILE ORA/RISPONDO SUBITO, senza ONLINE ORA (che nella
+     card desktop ha un trattamento a parte, vedi buildStatusBadgesHtml
+     sopra). Usata SOLO dal template desktop — il template mobile ha una
+     palette badge diversa (grigia, non verde/blu) e una propria funzione
+     dedicata, vedi buildMobileStatusBadgesHtml più sotto. */
   function buildAvailabilityBadgesHtml(listing) {
     var html = "";
     if (listing.isDisponibileSubito) {
@@ -444,48 +445,69 @@
   }
 
   /* --------------------------------------------------------------------
-     4bis) TEMPLATE MOBILE (Figma node 333:2882 / 596:12483)
+     4bis) TEMPLATE MOBILE (Figma node 691:927, iPhone SE 390px, card 360px
+     — sostituisce le versioni precedenti basate sui node 333:2882/
+     596:12483: quei due frame erano evidentemente più vecchi/incompleti,
+     691:927 è il layout aggiornato e quello da seguire alla lettera).
      Riusa le stesse classi degli elementi INTERATTIVI del template
      desktop (".toplist-card__favorite", ".toplist-card__stat",
      ".toplist-card__contact-button") così bindEvents() non deve
-     distinguere quale template ha generato l'elemento cliccato — stesso
-     comportamento, solo aspetto diverso (classi "toplist-card-mobile__*"
-     dedicate). I badge di stato riusano ".toplist-badge" (stessi colori
-     del desktop, vedi buildStatusBadgesHtml) dentro un contenitore
-     "flottante" posizionato sopra il bordo della card (position:absolute,
-     vedi CSS) invece che inline nell'header come nel desktop.
+     distinguere quale template ha generato l'elemento cliccato.
+
+     STRUTTURA (dall'alto in basso, valori 1:1 dal node Figma):
+     1. Badge TOPLIST — l'UNICO elemento flottante rimasto (position:
+        absolute sopra il bordo), ora in alto a SINISTRA (non più a
+        destra come nella versione precedente basata sui node vecchi).
+     2. Riga di chip: nome/età/video/foto + cuoricino preferiti — NESSUN
+        badge online qui (si è spostato più in basso, punto 4).
+     3. Separatore + galleria foto (invariati).
+     4. Riga badge di stato/prezzo (DISPONIBILE ORA, RISPONDO SUBITO,
+        ONLINE, prezzo) — NON PIÙ flottante: normale elemento di flusso
+        tra galleria e titolo. Questo risolve alla radice il problema di
+        overflow su schermi stretti della versione precedente (un
+        elemento in flusso va a capo con flex-wrap, non serve più uno
+        scroll orizzontale "di ripiego").
+     5. Titolo/descrizione, separatore, statistiche, pulsanti CTA
+        (invariati rispetto alla versione precedente).
+
+     COLORI DEI BADGE DI STATO — confermati ora su TRE frame Figma
+     diversi (333:2882, 596:12483, 691:927), sempre uguali: qui la card
+     mobile usa una palette grigia neutra (DISPONIBILE ORA grigio chiaro
+     #e5e7eb, RISPONDO SUBITO/ONLINE grigio medio #9ca3af), DIVERSA dai
+     colori verde/blu/rosa scelti per il desktop. Non è un placeholder:
+     su 3 frame indipendenti è sempre coerente, quindi qui NON riusiamo
+     le classi/colori del desktop (".toplist-badge--available" ecc.) —
+     classi dedicate sotto (buildMobileStatusBadgesHtml).
 
      Ordine statistiche DIVERSO dal desktop (Donazioni prima di
-     Recensioni): replica esattamente l'ordine del mockup Figma mobile.
-     "data-stat-type" resta invariato (stesse 5 chiavi), quindi
-     StatDetailModal.open() funziona senza modifiche.
-
-     Attenzione alle differenze DI POSIZIONE/COLORE rispetto al desktop,
-     tutte prese 1:1 dai valori esatti del node Figma (non riusate per
-     analogia col desktop, per evitare l'errore fatto nella prima
-     versione di questo template):
-     - la fascia prezzo (priceTier) sta nel gruppo di badge FLOTTANTI in
-       alto (con DISPONIBILE ORA/RISPONDO SUBITO), NON nella riga di chip
-       nome/età/foto come sul desktop;
-     - il badge "ONLINE" nella riga di chip è GRIGIO (#9ca3af), diverso
-       dal rosa (#ffade2) del badge "ONLINE ORA" desktop — colore
-       confermato dal node Figma, non un'estensione del tema desktop.
+     Recensioni): replica il mockup mobile. "data-stat-type" resta
+     invariato (stesse 5 chiavi), StatDetailModal.open() non cambia.
 
      Pulsante Telegram: presente SOLO se "listing.telegram" è valorizzato
-     (vedi schema dati sopra) — con 2 CTA i pulsanti Chiama/WhatsApp
-     occupano metà larghezza ciascuno, con 3 CTA un terzo ciascuno
-     (flex:1 0 0 in CSS, si adatta da solo al numero di pulsanti presenti,
-     nessun calcolo di larghezza nel JS). */
+     — con 2 CTA i pulsanti occupano metà larghezza ciascuno, con 3 CTA
+     un terzo (flex:1 0 0 in CSS, nessun calcolo nel JS). */
+  function buildMobileStatusBadgesHtml(listing, priceTier) {
+    var html = "";
+    if (listing.isDisponibileSubito) {
+      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--light">DISPONIBILE ORA</span>';
+    }
+    if (listing.isRispondoSubito) {
+      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark">RISPONDO SUBITO</span>';
+    }
+    if (listing.isOnlineOra) {
+      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark toplist-card-mobile__status-badge--online">' +
+        '<span class="toplist-card-mobile__online-dot"></span>ONLINE</span>';
+    }
+    html += '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>";
+    return html;
+  }
+
   function buildMobileCardHtml(listing, priceTier) {
     var hasTelegram = !!listing.telegram;
 
     return (
       '<div class="toplist-card-mobile">' +
 
-        '<div class="toplist-card-mobile__badges-float">' +
-          buildAvailabilityBadgesHtml(listing) +
-          '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>" +
-        "</div>" +
         (listing.isToplist
           ? '<div class="toplist-card-mobile__toplist-badge">' + ICON_STAR + "<span>TOPLIST</span></div>"
           : "") +
@@ -495,15 +517,14 @@
           '<span class="toplist-card-mobile__chip">Età : ' + listing.age + "</span>" +
           '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--icon">' + ICON_VIDEO + "<span>" + listing.videoCount + "</span></span>" +
           '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--icon">' + ICON_PHOTO + "<span>" + listing.photoCount + "</span></span>" +
-          (listing.isOnlineOra
-            ? '<span class="toplist-card-mobile__online-chip">ONLINE<span class="toplist-card-mobile__online-dot"></span></span>'
-            : "") +
           '<button type="button" class="toplist-card__favorite toplist-card-mobile__favorite" aria-label="Aggiungi ai preferiti" aria-pressed="false">' + ICON_HEART_OUTLINE + "</button>" +
         "</div>" +
 
         '<div class="toplist-card-mobile__separator"></div>' +
 
         '<div class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</div>" +
+
+        '<div class="toplist-card-mobile__status-row">' + buildMobileStatusBadgesHtml(listing, priceTier) + "</div>" +
 
         '<a href="#" class="toplist-card-mobile__body">' +
           '<h3 class="toplist-card-mobile__title">' + listing.title + "</h3>" +
