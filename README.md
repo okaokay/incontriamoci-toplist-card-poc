@@ -424,7 +424,7 @@ scorrere già da ~900px in su, con lo scroll orizzontale che resta come
 riserva solo per le larghezze più strette (tablet/mobile).
 
 
-## Card mobile — template a parte, non un adattamento del desktop (Figma node 333:2882 / 596:12483)
+## Card mobile — template a parte, non un adattamento del desktop (Figma node 691:927)
 
 Sotto i 768px la card non è più una versione compressa di quella desktop:
 è un **secondo template HTML**, generato da `buildMobileCardHtml()` in
@@ -433,19 +433,34 @@ Sotto i 768px la card non è più una versione compressa di quella desktop:
 lo stesso contenitore (`.toplist-card-container[data-listing-id]`); CSS
 mostra l'uno o l'altro in base alla larghezza (`.toplist-card` nascosta
 sotto 768px, `.toplist-card-mobile` nascosta sopra) — nessun ricalcolo
-lato JS al resize.
+lato JS al resize. Riferimento: node Figma `691:927` (frame iPhone SE
+390px, card 360px) — le due versioni precedenti (`333:2882`/`596:12483`)
+erano frame più vecchi, sostituiti da questo.
 
 **Le regole restano identiche tra i due template**: stessi flag letti
 (`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`),
-stesse 5 statistiche (ordine diverso: Donazioni prima di Recensioni sul
-mobile, replica esatta del mockup — le chiavi `data-stat-type` restano
-invariate, quindi `StatDetailModal` non richiede nessuna modifica), stessi
-link Chiama/WhatsApp. Cambia solo la disposizione visiva: chip arrotondati
-al posto della riga con separatori, badge di stato "flottanti" sopra il
-bordo della card invece che inline nell'header, galleria a riquadro
+stessi colori dei badge di stato (**uguali al desktop** — verde/blu/rosa,
+vedi "Colori dei badge di stato" più sopra: il grigio del mockup Figma è
+un placeholder di stile, non il colore reale, stessa logica già applicata
+al resto della card), stesse 5 statistiche (ordine diverso: Donazioni
+prima di Recensioni sul mobile, replica esatta del mockup — le chiavi
+`data-stat-type` restano invariate, quindi `StatDetailModal` non richiede
+nessuna modifica), stessi link Chiama/WhatsApp. Cambia la disposizione
+visiva: chip arrotondati al posto della riga con separatori, un solo
+badge flottante (TOPLIST, in alto a sinistra) invece di due gruppi,
+badge di stato/prezzo in flusso normale tra galleria e titolo (non più
+flottanti: si adattano con `flex-wrap` a qualunque larghezza invece di
+uscire dal bordo della card su schermi stretti), galleria a riquadro
 singolo (nessuna freccia: sul mobile la navigazione foto sarà a swipe,
 come nello slider vetrine) invece del carosello con frecce/contatore,
 pulsanti CTA a tutta larghezza invece che a sinistra.
+
+**Foto della galleria e titolo dell'annuncio sono link cliccabili** verso
+la pagina personale dell'inserzionista (`listing.profileUrl`, stesso
+concetto già usato nel componente slider vetrine per foto/nome): valore
+sempre dinamico, mai hardcoded — vale sia per il template mobile sia per
+quello desktop (anche lì il titolo/descrizione era già un link, ma
+puntava a un placeholder `"#"`, ora usa lo stesso campo dati).
 
 Gli elementi INTERATTIVI del template mobile riusano le stesse classi di
 quello desktop (`.toplist-card__favorite`, `.toplist-card__stat`,
@@ -459,6 +474,16 @@ alla volta via CSS), il click sul cuoricino aggiorna **tutti** i pulsanti
 `.toplist-card__favorite` con lo stesso `data-listing-id`, non solo quello
 cliccato — altrimenti ridimensionando la finestra da mobile a desktop (o
 viceversa) lo stato "preferito" sembrerebbe perso.
+
+**Nota tecnica sul bordo**: il contenitore della card mobile usa
+`outline` invece di `border` per i 4px di bordo grigio. In Figma lo
+stroke di un frame non riduce l'area di contenuto disponibile (a
+differenza del `border` CSS con `box-sizing:border-box`), quindi con un
+vero `border` la riga badge di stato risultava 8px più stretta del
+valore esatto nel file Figma (320px invece di 328px su una card da
+360px) — bastava questo per far andare a capo un badge di troppo su
+schermi non larghissimi. `outline` non partecipa al box model, quindi dà
+la stessa resa visiva con la larghezza di contenuto corretta.
 
 ## Pulsante Telegram — condizionale, solo se l'inserzionista ha collegato il canale
 

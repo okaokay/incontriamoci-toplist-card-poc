@@ -152,6 +152,13 @@
        - name          → campo "nome d'arte", Step 1 "Info Base" del wizard
                           di caricamento annuncio (doc, sezione 2.1, node
                           Figma 577:7224)
+       - profileUrl    → route della pagina personale pubblica
+                          dell'inserzionista (stesso concetto già usato nel
+                          componente slider vetrine, campo "profileUrl" di
+                          ogni profilo). Foto della galleria e titolo
+                          dell'annuncio sono link dinamici verso questo
+                          URL — mai hardcoded, così il senior collega la
+                          route reale Laravel senza toccare il markup.
        - phone/whatsapp → campo "telefono"/canale WhatsApp, Step 1 "Info
                           Base" (sezione 2.1, "toggle canali") — usati dai
                           pulsanti Chiama (tel:) e WhatsApp (wa.me) nel
@@ -226,6 +233,7 @@
     {
       id: "listing-1",
       name: "Sofia",
+      profileUrl: "/profilo/listing-1", /* pagina personale dell'inserzionista: foto+titolo cliccabili */
       phone: "+39061000001",     /* per il pulsante Chiama (tel:) */
       whatsapp: "39061000001",   /* per il pulsante WhatsApp (wa.me, SOLO cifre) */
       telegram: "sofia_incontriamoci", /* canale collegato: card mobile mostra 3 CTA */
@@ -247,6 +255,7 @@
     {
       id: "listing-2",
       name: "Martina",
+      profileUrl: "/profilo/listing-2",
       phone: "+39061000002",
       whatsapp: "39061000002",
       telegram: null, /* canale non collegato: card mobile mostra solo 2 CTA (Chiama/WhatsApp) */
@@ -268,6 +277,7 @@
     {
       id: "listing-3",
       name: "Giada",
+      profileUrl: "/profilo/listing-3",
       phone: "+39061000003",
       whatsapp: "39061000003",
       telegram: null,
@@ -399,7 +409,7 @@
             '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--next" aria-label="Foto successiva">' + ICON_ARROW_RIGHT + "</button>" +
             '<span class="toplist-card__photo-counter">1/' + listing.photos.length + "</span>" +
           "</div>" +
-          '<a href="#" class="toplist-card__body">' +
+          '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card__body">' +
             '<h3 class="toplist-card__title">' + listing.title + "</h3>" +
             '<p class="toplist-card__description">' + listing.description + "</p>" +
           "</a>" +
@@ -470,14 +480,18 @@
      5. Titolo/descrizione, separatore, statistiche, pulsanti CTA
         (invariati rispetto alla versione precedente).
 
-     COLORI DEI BADGE DI STATO — confermati ora su TRE frame Figma
-     diversi (333:2882, 596:12483, 691:927), sempre uguali: qui la card
-     mobile usa una palette grigia neutra (DISPONIBILE ORA grigio chiaro
-     #e5e7eb, RISPONDO SUBITO/ONLINE grigio medio #9ca3af), DIVERSA dai
-     colori verde/blu/rosa scelti per il desktop. Non è un placeholder:
-     su 3 frame indipendenti è sempre coerente, quindi qui NON riusiamo
-     le classi/colori del desktop (".toplist-badge--available" ecc.) —
-     classi dedicate sotto (buildMobileStatusBadgesHtml).
+     COLORI DEI BADGE DI STATO — il file Figma mostra una palette grigia
+     neutra per DISPONIBILE ORA/RISPONDO SUBITO/ONLINE, ma su indicazione
+     esplicita del cliente questi badge devono avere GLI STESSI colori
+     già scelti per il desktop (verde/blu/rosa, vedi "Colori dei badge di
+     stato" nel README): qui riusiamo quindi "buildStatusBadgesHtml"
+     (stessa funzione del desktop), non una palette dedicata. Il grigio
+     del mockup Figma resta quindi un placeholder di stile, non il colore
+     reale — stessa logica già applicata al resto della card.
+
+     Foto della galleria e titolo sono link a "listing.profileUrl" (pagina
+     personale dell'inserzionista, stesso concetto già usato nel
+     componente slider vetrine): valore sempre dal dato, mai hardcoded.
 
      Ordine statistiche DIVERSO dal desktop (Donazioni prima di
      Recensioni): replica il mockup mobile. "data-stat-type" resta
@@ -487,19 +501,7 @@
      — con 2 CTA i pulsanti occupano metà larghezza ciascuno, con 3 CTA
      un terzo (flex:1 0 0 in CSS, nessun calcolo nel JS). */
   function buildMobileStatusBadgesHtml(listing, priceTier) {
-    var html = "";
-    if (listing.isDisponibileSubito) {
-      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--light">DISPONIBILE ORA</span>';
-    }
-    if (listing.isRispondoSubito) {
-      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark">RISPONDO SUBITO</span>';
-    }
-    if (listing.isOnlineOra) {
-      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark toplist-card-mobile__status-badge--online">' +
-        '<span class="toplist-card-mobile__online-dot"></span>ONLINE</span>';
-    }
-    html += '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>";
-    return html;
+    return buildStatusBadgesHtml(listing) + '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>";
   }
 
   function buildMobileCardHtml(listing, priceTier) {
@@ -522,11 +524,11 @@
 
         '<div class="toplist-card-mobile__separator"></div>' +
 
-        '<div class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</div>" +
+        '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</a>" +
 
         '<div class="toplist-card-mobile__status-row">' + buildMobileStatusBadgesHtml(listing, priceTier) + "</div>" +
 
-        '<a href="#" class="toplist-card-mobile__body">' +
+        '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__body">' +
           '<h3 class="toplist-card-mobile__title">' + listing.title + "</h3>" +
           '<p class="toplist-card-mobile__description">' + listing.description + "</p>" +
         "</a>" +
