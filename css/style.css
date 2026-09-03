@@ -587,18 +587,46 @@
    qualunque larghezza di schermo, senza bisogno di scroll orizzontale
    "di ripiego" come nella versione precedente.
 
-   COLORI: il mockup Figma mostra un grigio neutro per DISPONIBILE
-   ORA/RISPONDO SUBITO/ONLINE, ma su indicazione del cliente questi badge
-   riusano ESATTAMENTE gli stessi colori del desktop (".toplist-badge",
-   buildStatusBadgesHtml in toplist-card.js) — qui restano solo il
-   contenitore di riga e il badge prezzo, che non hanno equivalente sul
-   desktop (lì il prezzo è testo semplice nell'header, non un chip). */
+   COLORI: confermati dal cliente sul node Figma 691:1021 (il gruppo
+   badge/prezzo isolato) — palette grigia ESATTA del mockup (DISPONIBILE
+   ORA grigio chiaro #e5e7eb, RISPONDO SUBITO/ONLINE grigio medio
+   #9ca3af), DIVERSA dai colori verde/blu/rosa del desktop
+   (".toplist-badge--available" ecc.): qui classi dedicate, non riusate
+   dal desktop. */
 .toplist-card-mobile__status-row {
   display: flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
   width: 100%;
+}
+.toplist-card-mobile__status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.toplist-card-mobile__status-badge--light {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+.toplist-card-mobile__status-badge--dark {
+  background: #9ca3af;
+  color: #fff;
+}
+.toplist-card-mobile__online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px solid #fff;
 }
 .toplist-card-mobile__price-badge {
   display: inline-flex;

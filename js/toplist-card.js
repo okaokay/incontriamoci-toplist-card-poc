@@ -480,14 +480,12 @@
      5. Titolo/descrizione, separatore, statistiche, pulsanti CTA
         (invariati rispetto alla versione precedente).
 
-     COLORI DEI BADGE DI STATO — il file Figma mostra una palette grigia
-     neutra per DISPONIBILE ORA/RISPONDO SUBITO/ONLINE, ma su indicazione
-     esplicita del cliente questi badge devono avere GLI STESSI colori
-     già scelti per il desktop (verde/blu/rosa, vedi "Colori dei badge di
-     stato" nel README): qui riusiamo quindi "buildStatusBadgesHtml"
-     (stessa funzione del desktop), non una palette dedicata. Il grigio
-     del mockup Figma resta quindi un placeholder di stile, non il colore
-     reale — stessa logica già applicata al resto della card.
+     COLORI DEI BADGE DI STATO — confermato dal cliente col node Figma
+     691:1021 (il gruppo badge/prezzo isolato): qui la card mobile usa la
+     palette grigia ESATTA del mockup (DISPONIBILE ORA grigio chiaro
+     #e5e7eb, RISPONDO SUBITO/ONLINE grigio medio #9ca3af), DIVERSA dai
+     colori verde/blu/rosa del desktop (".toplist-badge--available" ecc.,
+     vedi buildStatusBadgesHtml) — qui NON riusata, classi dedicate sotto.
 
      Foto della galleria e titolo sono link a "listing.profileUrl" (pagina
      personale dell'inserzionista, stesso concetto già usato nel
@@ -501,7 +499,19 @@
      — con 2 CTA i pulsanti occupano metà larghezza ciascuno, con 3 CTA
      un terzo (flex:1 0 0 in CSS, nessun calcolo nel JS). */
   function buildMobileStatusBadgesHtml(listing, priceTier) {
-    return buildStatusBadgesHtml(listing) + '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>";
+    var html = "";
+    if (listing.isDisponibileSubito) {
+      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--light">DISPONIBILE ORA</span>';
+    }
+    if (listing.isRispondoSubito) {
+      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark">RISPONDO SUBITO</span>';
+    }
+    if (listing.isOnlineOra) {
+      html += '<span class="toplist-card-mobile__status-badge toplist-card-mobile__status-badge--dark">' +
+        '<span class="toplist-card-mobile__online-dot"></span>ONLINE</span>';
+    }
+    html += '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>";
+    return html;
   }
 
   function buildMobileCardHtml(listing, priceTier) {

@@ -438,11 +438,13 @@ lato JS al resize. Riferimento: node Figma `691:927` (frame iPhone SE
 erano frame più vecchi, sostituiti da questo.
 
 **Le regole restano identiche tra i due template**: stessi flag letti
-(`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`),
-stessi colori dei badge di stato (**uguali al desktop** — verde/blu/rosa,
-vedi "Colori dei badge di stato" più sopra: il grigio del mockup Figma è
-un placeholder di stile, non il colore reale, stessa logica già applicata
-al resto della card), stesse 5 statistiche (ordine diverso: Donazioni
+(`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`).
+**I colori dei badge di stato invece sono DIVERSI dal desktop**: qui è
+la palette grigia neutra confermata dal cliente sul node Figma isolato
+`691:1021` (DISPONIBILE ORA grigio chiaro `#e5e7eb`, RISPONDO SUBITO/
+ONLINE grigio medio `#9ca3af`) — non il verde/blu/rosa scelto per il
+desktop (vedi "Colori dei badge di stato" più sopra, che riguarda SOLO
+il template desktop). Stesse 5 statistiche (ordine diverso: Donazioni
 prima di Recensioni sul mobile, replica esatta del mockup — le chiavi
 `data-stat-type` restano invariate, quindi `StatDetailModal` non richiede
 nessuna modifica), stessi link Chiama/WhatsApp. Cambia la disposizione
