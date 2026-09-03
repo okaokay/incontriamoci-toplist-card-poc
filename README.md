@@ -448,19 +448,21 @@ già per il resto della card. Nota sull'etichetta: qui il badge online usa
 il testo breve **"ONLINE"** (non "ONLINE ORA" come sul desktop) — è
 l'unico modo per restare nella larghezza esatta di riga del node Figma
 (`691:1021`, 328px su una card da 360px) e stare su **una riga sola**
-insieme agli altri 3 badge, come nel mockup: con l'etichetta intera non
-ci sta e va a capo. Stesse 5 statistiche (ordine diverso: Donazioni
-prima di Recensioni sul mobile, replica esatta del mockup — le chiavi
-`data-stat-type` restano invariate, quindi `StatDetailModal` non richiede
-nessuna modifica), stessi link Chiama/WhatsApp. Cambia la disposizione
-visiva: chip arrotondati al posto della riga con separatori, un solo
-badge flottante (TOPLIST, in alto a sinistra) invece di due gruppi,
-badge di stato/prezzo in flusso normale tra galleria e titolo (non più
-flottanti: si adattano con `flex-wrap` a qualunque larghezza invece di
-uscire dal bordo della card su schermi stretti), galleria a riquadro
-singolo (nessuna freccia: sul mobile la navigazione foto sarà a swipe,
-come nello slider vetrine) invece del carosello con frecce/contatore,
-pulsanti CTA a tutta larghezza invece che a sinistra.
+insieme agli altri badge di stato, come nel mockup: con l'etichetta
+intera non ci sta e va a capo. Stesse 5 statistiche (ordine diverso:
+Donazioni prima di Recensioni sul mobile, replica esatta del mockup — le
+chiavi `data-stat-type` restano invariate, quindi `StatDetailModal` non
+richiede nessuna modifica), stessi link Chiama/WhatsApp. Cambia la
+disposizione visiva: chip arrotondati al posto della riga con
+separatori, gruppo flottante in alto a sinistra con TOPLIST **e la
+fascia prezzo affiancati** (su richiesta del cliente — sul desktop il
+prezzo resta testo semplice nell'header, qui è un chip vicino a TOPLIST),
+badge di stato (senza il prezzo) in flusso normale tra galleria e titolo
+(non più flottanti: si adattano con `flex-wrap` a qualunque larghezza
+invece di uscire dal bordo della card su schermi stretti), galleria a
+riquadro singolo (nessuna freccia: sul mobile la navigazione foto sarà a
+swipe, come nello slider vetrine) invece del carosello con
+frecce/contatore, pulsanti CTA a tutta larghezza invece che a sinistra.
 
 **Foto della galleria e titolo dell'annuncio sono link cliccabili** verso
 la pagina personale dell'inserzionista (`listing.profileUrl`, stesso

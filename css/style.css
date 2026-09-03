@@ -518,18 +518,26 @@
   }
 }
 
-/* ---- 3.2) Badge TOPLIST flottante (in alto a SINISTRA) ------------------
-   Node 691:927 (iPhone SE, card 360px): l'UNICO badge rimasto flottante
-   sopra il bordo è TOPLIST, ora a sinistra — nelle due versioni Figma
-   precedenti (333:2882/596:12483) stava a destra e c'era un secondo
-   gruppo flottante con gli altri badge; qui quel gruppo è stato spostato
-   in flusso normale (vedi 3.4), quindi resta solo questo, piccolo,
-   nessun rischio di overflow su schermi stretti. */
-.toplist-card-mobile__toplist-badge {
+/* ---- 3.2) Badge flottanti in alto a SINISTRA: TOPLIST + prezzo ---------
+   Node 691:927 (iPhone SE, card 360px): l'UNICO gruppo rimasto flottante
+   sopra il bordo — nelle due versioni Figma precedenti (333:2882/
+   596:12483) il TOPLIST stava a destra da solo e gli altri badge di
+   stato in un secondo gruppo flottante; qui quel gruppo è in flusso
+   normale (vedi 3.4) e SOLO il prezzo si affianca al TOPLIST in questo
+   contenitore flottante, su richiesta esplicita del cliente. Il
+   contenitore ("top-float") porta il position:absolute, i due badge al
+   suo interno sono normali elementi di flusso (flex) — nessun rischio di
+   overflow, sono entrambi piccoli. */
+.toplist-card-mobile__top-float {
   position: absolute;
   left: 8px;
   top: -14px;
   z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.toplist-card-mobile__toplist-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -580,23 +588,18 @@
   width: 100%;
 }
 
-/* ---- 3.4) Riga badge di stato + prezzo, sotto la galleria ---------------
+/* ---- 3.4) Riga badge di stato, sotto la galleria -------------------------
    Diversamente dalle versioni Figma precedenti, QUI questi badge non sono
    più "flottanti" (position:absolute) ma un elemento di flusso normale
    tra galleria e titolo — "flex-wrap:wrap" basta da solo a gestire
    qualunque larghezza di schermo, senza bisogno di scroll orizzontale
-   "di ripiego" come nella versione precedente.
+   "di ripiego" come nella versione precedente. Il badge prezzo NON sta
+   più qui: su richiesta del cliente si è spostato accanto al TOPLIST nel
+   gruppo flottante in alto (vedi 3.2).
 
    COLORI: confermato dal cliente — GLI STESSI colori del desktop
    (verde/blu/rosa), quindi qui riusiamo le classi ".toplist-badge*" già
-   definite per il desktop (sezione 2.1) invece di classi dedicate. Resta
-   dedicato solo il badge prezzo (nessun equivalente sul desktop, dove il
-   prezzo è testo semplice nell'header, non un chip) e il contenitore di
-   riga sotto, che deve stare su UNA riga sola come nel node Figma
-   691:1021 — "flex-wrap:wrap" resta come sicurezza per schermi più
-   stretti dei 360px del mockup, non attivo alla larghezza di riferimento
-   (vedi ".toplist-badge" per i valori esatti di font/padding che
-   garantiscono la larghezza corretta). */
+   definite per il desktop (sezione 2.1) invece di classi dedicate. */
 .toplist-card-mobile__status-row {
   display: flex;
   align-items: center;

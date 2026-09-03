@@ -464,19 +464,17 @@
      ".toplist-card__contact-button") così bindEvents() non deve
      distinguere quale template ha generato l'elemento cliccato.
 
-     STRUTTURA (dall'alto in basso, valori 1:1 dal node Figma):
-     1. Badge TOPLIST — l'UNICO elemento flottante rimasto (position:
-        absolute sopra il bordo), ora in alto a SINISTRA (non più a
-        destra come nella versione precedente basata sui node vecchi).
+     STRUTTURA (dall'alto in basso):
+     1. Gruppo flottante in alto a sinistra (position:absolute sopra il
+        bordo): badge TOPLIST + badge prezzo affiancati — su richiesta
+        esplicita del cliente il prezzo si è spostato qui accanto al
+        TOPLIST (in origine stava nella riga badge di stato, punto 4).
      2. Riga di chip: nome/età/video/foto + cuoricino preferiti — NESSUN
-        badge online qui (si è spostato più in basso, punto 4).
+        badge online qui (sta nella riga di stato, punto 4).
      3. Separatore + galleria foto (invariati).
-     4. Riga badge di stato/prezzo (DISPONIBILE ORA, RISPONDO SUBITO,
-        ONLINE, prezzo) — NON PIÙ flottante: normale elemento di flusso
-        tra galleria e titolo. Questo risolve alla radice il problema di
-        overflow su schermi stretti della versione precedente (un
-        elemento in flusso va a capo con flex-wrap, non serve più uno
-        scroll orizzontale "di ripiego").
+     4. Riga badge di stato (DISPONIBILE ORA, RISPONDO SUBITO, ONLINE) —
+        NON flottante: normale elemento di flusso tra galleria e titolo,
+        si adatta con flex-wrap a qualunque larghezza di schermo.
      5. Titolo/descrizione, separatore, statistiche, pulsanti CTA
         (invariati rispetto alla versione precedente).
 
@@ -505,7 +503,7 @@
      Pulsante Telegram: presente SOLO se "listing.telegram" è valorizzato
      — con 2 CTA i pulsanti occupano metà larghezza ciascuno, con 3 CTA
      un terzo (flex:1 0 0 in CSS, nessun calcolo nel JS). */
-  function buildMobileStatusBadgesHtml(listing, priceTier) {
+  function buildMobileStatusBadgesHtml(listing) {
     var html = "";
     if (listing.isDisponibileSubito) {
       html += '<span class="toplist-badge toplist-badge--available">DISPONIBILE ORA</span>';
@@ -516,7 +514,6 @@
     if (listing.isOnlineOra) {
       html += '<span class="toplist-badge toplist-badge--neutral">ONLINE<span class="toplist-badge__dot"></span></span>';
     }
-    html += '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>";
     return html;
   }
 
@@ -526,9 +523,15 @@
     return (
       '<div class="toplist-card-mobile">' +
 
-        (listing.isToplist
-          ? '<div class="toplist-card-mobile__toplist-badge">' + ICON_STAR + "<span>TOPLIST</span></div>"
-          : "") +
+        /* Gruppo flottante in alto a sinistra: TOPLIST + prezzo affiancati,
+           su richiesta esplicita del cliente (prima il prezzo stava nella
+           riga badge di stato sotto la galleria, vedi 3.4 in style.css). */
+        '<div class="toplist-card-mobile__top-float">' +
+          (listing.isToplist
+            ? '<span class="toplist-card-mobile__toplist-badge">' + ICON_STAR + "<span>TOPLIST</span></span>"
+            : "") +
+          '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>" +
+        "</div>" +
 
         '<div class="toplist-card-mobile__chips">' +
           '<span class="toplist-card-mobile__chip">' + listing.name + "</span>" +
@@ -542,7 +545,7 @@
 
         '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</a>" +
 
-        '<div class="toplist-card-mobile__status-row">' + buildMobileStatusBadgesHtml(listing, priceTier) + "</div>" +
+        '<div class="toplist-card-mobile__status-row">' + buildMobileStatusBadgesHtml(listing) + "</div>" +
 
         '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__body">' +
           '<h3 class="toplist-card-mobile__title">' + listing.title + "</h3>" +
