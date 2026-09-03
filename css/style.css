@@ -765,6 +765,15 @@
   font-weight: 700;
   white-space: nowrap;
 }
+/* L'icona è un figlio diretto del pulsante (flex), quindi eredita
+   flex-shrink:1 di default: con 3 CTA presenti (Chiama+Telegram+
+   WhatsApp) lo spazio è stretto e senza questa regola l'icona veniva
+   "schiacciata" a larghezza zero insieme al testo, sparendo del tutto —
+   valore confermato dal node Figma (596:12553), dove l'icona ha
+   esplicitamente "shrink-0" mentre solo il testo può restringersi. */
+.toplist-card-mobile__action svg {
+  flex-shrink: 0;
+}
 /* Colori allineati alle CTA desktop (".toplist-card__contact-button--*",
    sezione 2.3) su richiesta del cliente — non più il grigio/scuro
    generico del mockup Figma. Chiama: stesso chip rosa del badge TOPLIST

@@ -532,3 +532,13 @@ solo un campo in più da quello step.
 - **WhatsApp**: stesso verde brand ufficiale del desktop (`#25d366`).
 - **Telegram** (non esiste sul desktop, pulsante solo mobile): colore
   ufficiale del brand Telegram `#0088cc`, icona e testo bianchi.
+
+**Bug corretto: icone invisibili con tutte e 3 le CTA presenti.** Con
+Chiama+Telegram+WhatsApp lo spazio per pulsante si restringe (`flex:1 0 0`
+su tre elementi invece di due) e l'icona SVG, essendo un figlio diretto
+di un contenitore flex senza `flex-shrink:0` esplicito, veniva
+"schiacciata" a larghezza zero insieme al testo — spariva del tutto,
+lasciando solo l'etichetta testuale. Il node Figma (`596:12553`) marca
+esplicitamente l'icona come "shrink-0" (non ridimensionabile): aggiunta
+la stessa regola (`.toplist-card-mobile__action svg { flex-shrink: 0; }`),
+ora le 3 icone restano sempre visibili alla loro dimensione piena (16px).
