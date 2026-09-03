@@ -359,19 +359,29 @@
      bindEvents() (più sotto) legge questo attributo con
      closest("[data-listing-id]") invece di closest(".toplist-card"), così
      gli stessi listener delegati funzionano IDENTICI sia sulla versione
-     desktop sia su quella mobile, senza bisogno di duplicare bindEvents. */
+     desktop sia su quella mobile, senza bisogno di duplicare bindEvents.
+
+     Il bordo colorato (is_bordo/colore_bordo, sezione 6.2.2 doc) è
+     un'altra regola che deve restare IDENTICA in entrambi i template: il
+     colore risolto qui una sola volta ("borderColorHex") viene passato a
+     entrambi. Cambia solo COME viene applicato — la card desktop usa un
+     vero "border" (da 1px a 2px quando colorato), la card mobile usa un
+     "outline" (vedi CSS, sezione 3.1, per il perché) quindi qui coloriamo
+     l'outline invece del border, stesso spessore di sempre (4px). */
   function buildCardHtml(listing) {
     var priceTier = getPriceTier(listing.costPerHour);
 
-    var borderStyle = "";
+    var borderColorHex = null;
     if (listing.isBordo && listing.coloreBordo && BORDER_COLOR_PALETTE[listing.coloreBordo]) {
-      borderStyle = ' style="border-color: ' + BORDER_COLOR_PALETTE[listing.coloreBordo] + '; border-width: 2px;"';
+      borderColorHex = BORDER_COLOR_PALETTE[listing.coloreBordo];
     }
+    var desktopBorderStyle = borderColorHex ? ' style="border-color: ' + borderColorHex + '; border-width: 2px;"' : "";
+    var mobileBorderStyle = borderColorHex ? ' style="outline-color: ' + borderColorHex + ';"' : "";
 
     return (
       '<div class="toplist-card-container" data-listing-id="' + listing.id + '">' +
-        buildDesktopCardHtml(listing, priceTier, borderStyle) +
-        buildMobileCardHtml(listing, priceTier) +
+        buildDesktopCardHtml(listing, priceTier, desktopBorderStyle) +
+        buildMobileCardHtml(listing, priceTier, mobileBorderStyle) +
       "</div>"
     );
   }
@@ -537,11 +547,11 @@
     return html;
   }
 
-  function buildMobileCardHtml(listing, priceTier) {
+  function buildMobileCardHtml(listing, priceTier, borderStyle) {
     var hasTelegram = !!listing.telegram;
 
     return (
-      '<div class="toplist-card-mobile">' +
+      '<div class="toplist-card-mobile"' + borderStyle + '>' +
 
         /* Gruppo flottante in alto a sinistra: TOPLIST + prezzo affiancati,
            su richiesta esplicita del cliente (prima il prezzo stava nella

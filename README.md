@@ -438,7 +438,16 @@ lato JS al resize. Riferimento: node Figma `691:927` (frame iPhone SE
 erano frame più vecchi, sostituiti da questo.
 
 **Le regole restano identiche tra i due template**: stessi flag letti
-(`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`).
+(`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`,
+`isBordo`/`coloreBordo`). **Bug corretto**: il bordo colorato (sezione
+"Bordo colorato" più sopra) veniva calcolato ma applicato SOLO al
+template desktop — la card mobile di un annuncio con `is_bordo` attivo
+restava sempre col bordo grigio di default, invece di mostrare il colore
+scelto. Corretto passando lo stesso colore risolto a entrambi i template:
+la card desktop lo applica al `border` (1px → 2px quando colorato), la
+mobile lo applica all'`outline` (colora solo l'`outline-color`, stesso
+spessore di sempre — vedi nota tecnica sull'`outline` più sotto per il
+perché la card mobile non usa un `border` vero).
 **I colori dei badge di stato sono GLI STESSI del desktop** (verde
 DISPONIBILE ORA, blu RISPONDO SUBITO, rosa ONLINE ORA con pallino verde
 pulsante — vedi "Colori dei badge di stato" più sopra): il template
