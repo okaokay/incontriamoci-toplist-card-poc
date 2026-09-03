@@ -470,7 +470,7 @@
    slider vetrine che aveva un node dedicato 681:2090). L'adattamento qui
    sotto è quindi una scelta ragionevole di chi scrive il codice, non una
    traduzione 1:1 di un mockup: da confermare col design prima di andare
-   in produzione (vedi "Domande per il senior" nel README).
+   in produzione.
    ============================================================================ */
 @media (max-width: 767px) {
   .toplist-card__content {

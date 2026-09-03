@@ -162,7 +162,7 @@ annuncio (doc, sezione 2):
   in `toplist-card.js`. Le soglie usate (`>= 150 → €€€`, `>= 70 → €€`,
   altrimenti `€`) sono un esempio ragionevole, **non valori di business
   ufficiali** — vanno confermate con cliente/senior prima di andare in
-  produzione (vedi "Domande per il senior").
+  produzione.
 
 ## Nome, Chiama e badge TOPLIST — stile "chip catturato" (valori esatti da Figma)
 
@@ -229,7 +229,7 @@ comporta come un vero toggle "mi piace":
 Vedi `bindFavoriteEvents()` in `toplist-card.js`. **Nota**: questo stato è
 solo visivo/lato browser in questo POC (non chiama nessun endpoint, non
 persiste al reload) — la persistenza reale del preferito per l'utente
-loggato è lato Laravel, vedi "Domande per il senior".
+loggato è lato Laravel.
 
 ## Reazioni disponibili nella modale "Reazioni"
 
@@ -241,7 +241,7 @@ Font Awesome Free 6.7.2** (`heart`, `face-grin-hearts`, `fire`,
 `face-meh`), non le emoji usate nel resto della modale per il valore di
 ogni riga. In questo POC sono solo informative (mostrano cosa si PUÒ
 scegliere), non ancora cliccabili per lasciare una reazione vera — vedi
-"Domande per il senior" per il collegamento a un endpoint reale.
+da collegare a un endpoint reale prima di andare in produzione.
 
 ## Donazioni: solo il numero, senza simbolo "€"
 
@@ -423,52 +423,3 @@ agli altri gap dell'header — così il cuoricino resta visibile senza dover
 scorrere già da ~900px in su, con lo scroll orizzontale che resta come
 riserva solo per le larghezze più strette (tablet/mobile).
 
-## Domande per il senior
-
-1. **Contratto delle 5 liste di dettaglio**: un endpoint dedicato per tipo
-   (es. `/api/annunci/:id/followers`, `/api/annunci/:id/reactions`, ecc.) o
-   un unico endpoint parametrico (es. `/api/annunci/:id/stats/:tipo`)? La
-   forma attesa dal frontend è `{ anonymous_count, rows: [...] }`.
-2. **Flag `is_anonymous`**: come viene esposto per ogni interazione
-   (follow/reazione/salvataggio/recensione)? Le donazioni, da mockup, non
-   supportano l'anonimato (nessun flag necessario per quel tipo).
-3. **Relazioni Eloquent da esporre**: `listing→followers`,
-   `listing→reactions` (con tipo emoji), `listing→savedBy`,
-   `listing→reviews` (con `rating` e testo), `listing→donations` (con
-   importo) — tutte con utente collegato (o riga anonima) e timestamp.
-4. **Sincronizzazione contatore Recensioni**: la doc (7.3) segnala che il
-   numero "Reviews" nel footer statistiche deve restare sincronizzato con
-   qualunque altro punto del sito mostri lo stesso dato (stessa fonte).
-   Verificare in fase di query che non ci siano due conteggi divergenti.
-5. **Layout mobile**: il node Figma `409:4482` è solo desktop — non è stato
-   fornito un node mobile dedicato per questa card (a differenza dello
-   slider vetrine, che aveva il node `681:2090`). L'adattamento mobile qui
-   incluso (card impilata verticalmente invece che riga orizzontale) è una
-   scelta ragionevole di chi ha scritto il codice, **non** una traduzione
-   1:1 di un mockup — da confermare col design prima di andare in
-   produzione.
-6. **Colori badge di stato**: confermare che verde/blu (vedi sezione
-   dedicata sopra) siano effettivamente i colori finali voluti per
-   "DISPONIBILE ORA"/"RISPONDO SUBITO", dato che il file Figma statico
-   mostra grigio invece che i colori descritti a testo nella doc.
-7. **Palette bordo colorato (9 colori)**: i valori hex usati qui
-   (`toplist-card.js`, `BORDER_COLOR_PALETTE`) sono una scelta ragionevole
-   per rosa/magenta/rosso/arancione/giallo/verde/blu/viola/nero, non
-   valori esatti forniti dal design — da allineare con la palette
-   ufficiale quando il pannello opzioni (fuori scope qui) sarà progettato.
-8. **Persistenza del "preferito"**: che endpoint salva/rimuove il
-   preferito per l'utente loggato (`POST`/`DELETE /api/annunci/:id/preferiti`
-   o simile)? Serve anche sapere se la card deve arrivare già con lo stato
-   iniziale "preferito da questo utente" valorizzato dal server (oggi parte
-   sempre vuota, vedi sezione dedicata sopra).
-9. **Reazioni cliccabili**: le 4 icone mostrate nella modale Reazioni sono
-   oggi solo informative — se in futuro devono diventare cliccabili per
-   lasciare davvero una reazione, serve l'endpoint corrispondente (es.
-   `POST /api/annunci/:id/reazioni` con il tipo scelto) e la gestione di
-   "un utente può cambiare/togliere la propria reazione" o solo aggiungerne
-   una nuova.
-10. **Soglie fascia prezzo**: le soglie usate da `getPriceTier()` (`€€€`
-    da 150/ora, `€€` da 70/ora, altrimenti `€`) sono un esempio ragionevole
-    scelto per riprodurre visivamente le 3 fasce già presenti nei dati
-    finti precedenti — non sono valori di business ufficiali, vanno
-    confermati (o resi configurabili lato server) prima di produzione.
