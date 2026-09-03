@@ -470,10 +470,16 @@ bianco/grigio del mockup Figma statico); il badge prezzo ha sfondo nero
 scelti dal cliente, non presenti nel mockup Figma (che lo mostrava
 grigio). Badge di stato (senza il prezzo) in flusso normale tra galleria e titolo
 (non più flottanti: si adattano con `flex-wrap` a qualunque larghezza
-invece di uscire dal bordo della card su schermi stretti), galleria a
-riquadro singolo (nessuna freccia: sul mobile la navigazione foto sarà a
-swipe, come nello slider vetrine) invece del carosello con
-frecce/contatore, pulsanti CTA a tutta larghezza invece che a sinistra.
+invece di uscire dal bordo della card su schermi stretti), pulsanti CTA a
+tutta larghezza invece che a sinistra. **La galleria foto ha le stesse
+frecce prev/next e lo stesso contatore posizione del desktop** (su
+richiesta del cliente — in un primo momento erano state omesse, pensando
+allo swipe come unica navigazione mobile, ma il cliente le vuole
+comunque): riusa esattamente le classi `.toplist-card__carousel-arrow`/
+`.toplist-card__photo-counter` del desktop, quindi `bindEvents()` non ha
+richiesto nessuna modifica — il contenitore media porta ENTRAMBE le
+classi `.toplist-card__media`/`.toplist-card-mobile__media` (la prima per
+l'aggancio agli eventi esistenti, la seconda per le dimensioni mobile).
 
 **Foto della galleria e titolo dell'annuncio sono link cliccabili** verso
 la pagina personale dell'inserzionista (`listing.profileUrl`, stesso
@@ -519,3 +525,10 @@ In produzione questo campo arriva dallo stesso "toggle canali" dello Step
 1 del wizard di caricamento annuncio che già fornisce telefono/WhatsApp
 (vedi schema dati in `toplist-card.js`) — nessun nuovo step richiesto,
 solo un campo in più da quello step.
+
+**Colori dei 3 pulsanti CTA mobile**, su richiesta del cliente:
+- **Chiama**: stesso chip rosa del desktop (`#fe9bdd`, bordo `#77767b`) —
+  non più il grigio scuro generico del mockup Figma.
+- **WhatsApp**: stesso verde brand ufficiale del desktop (`#25d366`).
+- **Telegram** (non esiste sul desktop, pulsante solo mobile): colore
+  ufficiale del brand Telegram `#0088cc`, icona e testo bianchi.

@@ -543,7 +543,28 @@
 
         '<div class="toplist-card-mobile__separator"></div>' +
 
-        '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</a>" +
+        /* Frecce prev/next + contatore posizione: IDENTICI al desktop
+           (".toplist-card__carousel-arrow", ".toplist-card__photo-counter"),
+           su richiesta del cliente — prima il mobile aveva solo il
+           placeholder senza alcuna navigazione. Riusano le stesse classi
+           interattive del desktop così bindEvents() non richiede nessuna
+           modifica (il click delegato su ".toplist-card__carousel-arrow"
+           già cerca il contatore dentro il ".toplist-card__media" più
+           vicino — per questo il contenitore qui sotto ha ENTRAMBE le
+           classi ".toplist-card__media" e ".toplist-card-mobile__media",
+           la prima per l'aggancio agli eventi, la seconda per le
+           dimensioni mobile (100% larghezza invece di 36%, vedi CSS).
+           Foto e link al profilo (<a>) sono ora un elemento a parte
+           (".toplist-card-mobile__gallery", position:absolute) invece di
+           avvolgere l'intero blocco, altrimenti i pulsanti freccia
+           finirebbero annidati dentro un <a> (HTML non valido, click
+           inaffidabile). */
+        '<div class="toplist-card__media toplist-card-mobile__media">' +
+          '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</a>" +
+          '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--prev" aria-label="Foto precedente">' + ICON_ARROW_LEFT + "</button>" +
+          '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--next" aria-label="Foto successiva">' + ICON_ARROW_RIGHT + "</button>" +
+          '<span class="toplist-card__photo-counter">1/' + listing.photos.length + "</span>" +
+        "</div>" +
 
         '<div class="toplist-card-mobile__status-row">' + buildMobileStatusBadgesHtml(listing) + "</div>" +
 

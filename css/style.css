@@ -632,16 +632,33 @@
   white-space: nowrap;
 }
 
-/* ---- 3.4) Galleria foto: riquadro singolo con icona, no carosello -------
-   Il mockup mobile non ha frecce/contatore (lo swipe sostituisce i
-   pulsanti, come nello slider vetrine): un solo box con un'icona
-   "immagine" centrata, in attesa della foto reale. È un <a> (link alla
-   pagina personale dell'inserzionista, listing.profileUrl), non un
-   semplice <div> — stesso trattamento già dato a foto/nome nello slider
-   vetrine. */
-.toplist-card-mobile__gallery {
+/* ---- 3.4) Galleria foto: stesse frecce/contatore del desktop -----------
+   Su richiesta del cliente il mobile ha ora la stessa navigazione a
+   frecce + contatore posizione del desktop (".toplist-card__carousel-arrow",
+   ".toplist-card__photo-counter", riusate as-is dal blocco 2.2 — vedi
+   buildMobileCardHtml in toplist-card.js per il markup). Qui restano solo
+   le regole SPECIFICHE del mobile: le dimensioni del contenitore media
+   (100% larghezza invece del 36% desktop, niente bordo destro) e lo
+   stile del box foto vero e proprio (icona "immagine" centrata invece
+   del pattern a "X" diagonale del desktop, in attesa della foto reale). */
+.toplist-card-mobile__media {
+  flex: none;
+  max-width: none;
   width: 100%;
-  height: 256px;
+  min-height: 256px;
+  background: none;
+  border-right: none;
+}
+/* position:absolute (non un elemento a larghezza piena nel flusso): i
+   pulsanti freccia e il contatore, assoluti anch'essi, devono sovrapporsi
+   alla foto invece di essere spinti sotto — stesso schema del desktop,
+   dove ".toplist-card__photo-placeholder" ha lo stesso trattamento. È un
+   <a> (link alla pagina personale dell'inserzionista, listing.profileUrl),
+   non un semplice <div> — stesso trattamento già dato a foto/nome nello
+   slider vetrine. */
+.toplist-card-mobile__gallery {
+  position: absolute;
+  inset: 0;
   border-radius: 10px;
   background: #e5e7eb;
   color: #9ca3af;
@@ -748,14 +765,26 @@
   font-weight: 700;
   white-space: nowrap;
 }
+/* Colori allineati alle CTA desktop (".toplist-card__contact-button--*",
+   sezione 2.3) su richiesta del cliente — non più il grigio/scuro
+   generico del mockup Figma. Chiama: stesso chip rosa del badge TOPLIST
+   (#fe9bdd, bordo #77767b). WhatsApp: stesso verde brand ufficiale
+   (#25d366) già usato sul desktop e nello slider vetrine. */
 .toplist-card-mobile__action--call {
-  background: #1f2937;
+  background: #fe9bdd;
+  border: 1px solid #77767b;
+  color: #1a1c1c;
+}
+.toplist-card-mobile__action--whatsapp {
+  background: #25d366;
   color: #fff;
 }
-.toplist-card-mobile__action--telegram,
-.toplist-card-mobile__action--whatsapp {
-  background: #e5e7eb;
-  color: #1f2937;
+/* Telegram non esiste sul desktop (pulsante solo mobile, vedi
+   "listing.telegram" in toplist-card.js): colore ufficiale del brand
+   Telegram (#0088cc) con icona/testo bianchi, indicato dal cliente. */
+.toplist-card-mobile__action--telegram {
+  background: #0088cc;
+  color: #fff;
 }
 
 /* ============================================================================
