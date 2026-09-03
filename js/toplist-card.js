@@ -460,6 +460,17 @@
      "data-stat-type" resta invariato (stesse 5 chiavi), quindi
      StatDetailModal.open() funziona senza modifiche.
 
+     Attenzione alle differenze DI POSIZIONE/COLORE rispetto al desktop,
+     tutte prese 1:1 dai valori esatti del node Figma (non riusate per
+     analogia col desktop, per evitare l'errore fatto nella prima
+     versione di questo template):
+     - la fascia prezzo (priceTier) sta nel gruppo di badge FLOTTANTI in
+       alto (con DISPONIBILE ORA/RISPONDO SUBITO), NON nella riga di chip
+       nome/età/foto come sul desktop;
+     - il badge "ONLINE" nella riga di chip è GRIGIO (#9ca3af), diverso
+       dal rosa (#ffade2) del badge "ONLINE ORA" desktop — colore
+       confermato dal node Figma, non un'estensione del tema desktop.
+
      Pulsante Telegram: presente SOLO se "listing.telegram" è valorizzato
      (vedi schema dati sopra) — con 2 CTA i pulsanti Chiama/WhatsApp
      occupano metà larghezza ciascuno, con 3 CTA un terzo ciascuno
@@ -471,7 +482,10 @@
     return (
       '<div class="toplist-card-mobile">' +
 
-        '<div class="toplist-card-mobile__badges-float">' + buildAvailabilityBadgesHtml(listing) + "</div>" +
+        '<div class="toplist-card-mobile__badges-float">' +
+          buildAvailabilityBadgesHtml(listing) +
+          '<span class="toplist-card-mobile__price-badge">' + priceTier + "</span>" +
+        "</div>" +
         (listing.isToplist
           ? '<div class="toplist-card-mobile__toplist-badge">' + ICON_STAR + "<span>TOPLIST</span></div>"
           : "") +
@@ -481,9 +495,8 @@
           '<span class="toplist-card-mobile__chip">Età : ' + listing.age + "</span>" +
           '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--icon">' + ICON_VIDEO + "<span>" + listing.videoCount + "</span></span>" +
           '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--icon">' + ICON_PHOTO + "<span>" + listing.photoCount + "</span></span>" +
-          '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--price">' + priceTier + "</span>" +
           (listing.isOnlineOra
-            ? '<span class="toplist-badge toplist-badge--neutral">ONLINE<span class="toplist-badge__dot"></span></span>'
+            ? '<span class="toplist-card-mobile__online-chip">ONLINE<span class="toplist-card-mobile__online-dot"></span></span>'
             : "") +
           '<button type="button" class="toplist-card__favorite toplist-card-mobile__favorite" aria-label="Aggiungi ai preferiti" aria-pressed="false">' + ICON_HEART_OUTLINE + "</button>" +
         "</div>" +

@@ -472,25 +472,27 @@
    in base alla larghezza. Le regole sotto sono quindi solo show/hide,
    non un adattamento del markup desktop.
    ============================================================================ */
+/* ---- 3.1) Contenitore card mobile (Figma node 333:2882) -----------------
+   "display:none" di default (visibile SOLO sotto i 768px, vedi la media
+   query più sotto): ATTENZIONE, questa è l'UNICA dichiarazione "display"
+   per ".toplist-card-mobile" nel file — un secondo blocco di regole per
+   lo stesso selettore che ridichiara "display" (es. "flex" per il layout
+   interno) vincerebbe in cascata su questo "none" e mostrerebbe la card
+   mobile anche su desktop (bug reale, successo durante lo sviluppo:
+   "display:flex" qui sotto stava in un blocco separato più in basso nel
+   file e sovrascriveva silenziosamente questo "none").
+
+   Bordo grigio spesso (non 1px come il desktop) + radius pronunciato +
+   ombra leggera: valori ESATTI dal node Figma. "gap:12px" in colonna è il
+   gap REALE tra i blocchi (Header Info, Separator, Image Gallery, Titolo,
+   Separator, Stats, Action Buttons) nel node Figma. position:relative
+   perché i badge di stato/TOPLIST sono "flottanti" sopra il bordo
+   superiore (position:absolute, vedi 3.2). */
 .toplist-card-mobile {
   display: none;
-}
-@media (max-width: 767px) {
-  .toplist-card {
-    display: none;
-  }
-  .toplist-card-mobile {
-    display: block;
-  }
-}
-
-/* ---- 3.1) Contenitore card mobile (Figma node 333:2882) -----------------
-   Bordo grigio spesso (non 1px come il desktop) + radius pronunciato +
-   ombra leggera: valori ESATTI dal node Figma. position:relative perché i
-   badge di stato/TOPLIST sono "flottanti" sopra il bordo superiore
-   (position:absolute, vedi 3.2). */
-.toplist-card-mobile {
   position: relative;
+  flex-direction: column;
+  gap: 12px;
   background: #fff;
   border: 4px solid #e5e7eb;
   border-radius: 12px;
@@ -498,23 +500,67 @@
   padding: 16px;
   margin-top: 14px; /* spazio per i badge flottanti (top:-14px) senza tagliarli */
 }
+@media (max-width: 767px) {
+  .toplist-card {
+    display: none;
+  }
+  .toplist-card-mobile {
+    display: flex;
+  }
+}
 
-/* ---- 3.2) Badge di stato/TOPLIST flottanti sopra il bordo ---------------
-   Riusano ".toplist-badge"/".toplist-card__toplist-flag"? No: il badge
-   TOPLIST mobile ha uno stile diverso dal desktop (Figma: sfondo bianco,
-   bordo grigio, testo grigio, NON il chip rosa del desktop) — stile
-   dedicato sotto. I badge di stato invece riusano ESATTAMENTE
-   ".toplist-badge" (stessi colori reali già scelti per il desktop, vedi
-   sezione 2.1): stesso significato, stesso colore, cambia solo la
-   posizione (flottante invece che inline nell'header). */
+/* ---- 3.2) Badge flottanti sopra il bordo (in alto a sinistra: stato +
+   fascia prezzo; in alto a destra: TOPLIST) -------------------------------
+   IMPORTANTE: la fascia prezzo (priceTier, es. "€€€") sta QUI, insieme a
+   DISPONIBILE ORA/RISPONDO SUBITO — non nella riga di chip nome/età/foto
+   come sul desktop. Valore confermato dal node Figma (gruppo "Toplist
+   Badge" in alto a sinistra contiene sempre e solo questi 3 elementi).
+   I badge di stato riusano ESATTAMENTE ".toplist-badge" (stessi colori
+   già scelti per il desktop, sezione 2.1): stesso significato, stesso
+   colore, cambia solo la posizione. Il badge TOPLIST invece ha uno stile
+   dedicato (sfondo bianco, bordo grigio, testo grigio — diverso dal chip
+   rosa del desktop, valore ESATTO dal node Figma). */
+/* "right: 76px" delimita la larghezza disponibile (spazio riservato al
+   badge TOPLIST a destra, sempre presente): senza un limite di larghezza
+   un elemento position:absolute non va mai a capo da solo, e su schermi
+   stretti (320px) il gruppo di badge finiva silenziosamente FUORI dal
+   bordo della card invece di adattarsi. "overflow-x:auto" con scrollbar
+   nascosta (stesso pattern già usato per l'header della card desktop,
+   vedi ".toplist-card__header") lascia il gruppo su una riga sola e
+   scorrevole invece di andare a capo e rischiare di sovrapporsi alla riga
+   di chip sottostante (che parte subito dopo, vedi 3.1). */
 .toplist-card-mobile__badges-float {
   position: absolute;
   left: 8px;
+  right: 76px;
   top: -14px;
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
   z-index: 1;
+}
+.toplist-card-mobile__badges-float::-webkit-scrollbar {
+  display: none;
+}
+.toplist-card-mobile__price-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  background: #d9d9d9;
+  border-radius: 9px;
+  padding: 3px 10px;
+  /* Il node Figma usa "JetBrains Mono": font non garantito sui device dei
+     clienti, quindi usiamo il font di sistema (come gli altri badge) con
+     un filo di letter-spacing per mantenere l'effetto "a scatti" senza
+     dipendere da un webfont non incluso nel progetto. */
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: #000;
+  white-space: nowrap;
 }
 .toplist-card-mobile__toplist-badge {
   position: absolute;
@@ -536,7 +582,7 @@
   white-space: nowrap;
 }
 
-/* ---- 3.3) Riga di chip (nome/età/video/foto/prezzo/online) --------------
+/* ---- 3.3) Riga di chip (nome/età/video/foto/online) ---------------------
    Stessi dati della riga "header-left" desktop, come chip arrotondati
    invece che testo con separatori — replica il node Figma 333:2882. Il
    cuoricino preferiti riusa ".toplist-card__favorite" (stessa interazione
@@ -561,8 +607,31 @@
   color: #1f2937;
   white-space: nowrap;
 }
-.toplist-card-mobile__chip--price {
+/* Badge "ONLINE" nella riga di chip: GRIGIO (#9ca3af), valore ESATTO dal
+   node Figma — diverso dal rosa (#ffade2) del badge "ONLINE ORA" della
+   card desktop (".toplist-badge--neutral"), quindi stile dedicato invece
+   di riusare quella classe. */
+.toplist-card-mobile__online-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+  background: #9ca3af;
+  border-radius: 9999px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  padding: 2px 8px;
+  font-size: 10px;
   font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.toplist-card-mobile__online-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #000;
+  border: 1px solid #fff;
 }
 .toplist-card-mobile__favorite {
   margin-left: auto;
@@ -672,16 +741,18 @@
 }
 .toplist-card-mobile__action {
   flex: 1 0 0;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 12px;
+  padding: 10px 16px;
   border: none;
   border-radius: 12px;
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
   font-size: 14px;
   font-weight: 700;
+  white-space: nowrap;
 }
 .toplist-card-mobile__action--call {
   background: #1f2937;
