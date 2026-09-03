@@ -1,9 +1,10 @@
 /* ============================================================================
    TOPLIST CARD — jQuery Plugin ($.fn.toplistCard)
-   Riferimento Figma: node 409:4482 ("Toplist Item 1"). Card annuncio in
-   evidenza a pagamento: badge di stato, carosello foto, titolo/descrizione,
-   riga statistiche cliccabile (apre le modali di stat-detail-modal.js) e
-   pulsanti Chiama/WhatsApp.
+   Riferimento Figma: node 409:4482 ("Toplist Item 1", desktop) e nodi
+   333:2882/596:12483 (variante mobile, senza/con pulsante Telegram). Card
+   annuncio in evidenza a pagamento: badge di stato, carosello foto,
+   titolo/descrizione, riga statistiche cliccabile (apre le modali di
+   stat-detail-modal.js) e pulsanti Chiama/WhatsApp(/Telegram su mobile).
 
    File autonomo, dipende solo da jQuery + StatDetailModal (vedi
    stat-detail-modal.js, caricato prima di questo in index.html). Stesso
@@ -99,6 +100,23 @@
     "</svg>";
   /* Reazioni: emoji, non SVG (esattamente come nel mockup Figma 516:9277) */
   var ICON_REACTIONS_EMOJI = "🖤😐";
+  /* Icona Telegram: logo ufficiale (path standard, licenza MIT via
+     simple-icons) — stessa convenzione già usata per WhatsApp. Solo per
+     il pulsante di contatto nella card mobile (Figma node 596:12483),
+     mostrato solo se l'inserzionista ha collegato un canale Telegram. */
+  var ICON_TELEGRAM =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">' +
+    '<path d="M12 0C5.373 0 0 5.372 0 12c0 6.627 5.373 12 12 12 6.628 0 12-5.373 12-12 0-6.628-5.372-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.14-.259.259-.526.259l.188-2.68 4.923-4.44c.213-.19-.048-.297-.34-.108l-6.087 3.802-2.62-.818c-.578-.18-.588-.578.12-.858l10.222-3.94c.483-.174.905.11.75.858z"/>' +
+    "</svg>";
+  /* Icona "immagine" per il placeholder della galleria foto nella card
+     mobile (Figma mostra un'icona centrata in un box grigio, diversa dal
+     pattern a "X" diagonale usato nella card desktop, node 333:2882). */
+  var ICON_IMAGE_PLACEHOLDER =
+    '<svg viewBox="0 0 20 18" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">' +
+    '<rect x="0.6" y="0.6" width="18.8" height="16.8" rx="2" />' +
+    '<circle cx="5.5" cy="5.5" r="1.7" />' +
+    '<path d="M1 14L6.5 9L10.5 12.5L14.5 8L19 12.5" stroke-linejoin="round" stroke-linecap="round" />' +
+    "</svg>";
 
   /* --------------------------------------------------------------------
      1) PALETTE COLORI BORDO (Figma doc, sezione 6.2.2)
@@ -140,6 +158,16 @@
                           footer. "whatsapp" deve essere SOLO cifre
                           (formato internazionale senza "+", richiesto da
                           wa.me), "phone" può includere il "+".
+       - telegram      → canale Telegram, stesso "toggle canali" dello
+                          Step 1 — OPZIONALE: null/assente se l'inserzionista
+                          non l'ha collegato. Il pulsante "Telegram" nella
+                          card MOBILE (Figma node 596:12483) compare SOLO
+                          quando questo campo è valorizzato (altrimenti la
+                          card resta a 2 CTA, Figma node 333:2882) — vedi
+                          buildMobileCardHtml più sotto. Valore atteso: username
+                          o link t.me completo (qui usiamo solo l'username,
+                          es. "sofia_incontriamoci", costruendo l'href come
+                          "https://t.me/" + telegram).
        - age           → campo "età", Step 1 "Info Base" (sezione 2.1)
        - videoCount    → count di listing_media dove type = "video"
                           (caricato nello Step 2 "Media & Tag", sezione 2.2)
@@ -200,6 +228,7 @@
       name: "Sofia",
       phone: "+39061000001",     /* per il pulsante Chiama (tel:) */
       whatsapp: "39061000001",   /* per il pulsante WhatsApp (wa.me, SOLO cifre) */
+      telegram: "sofia_incontriamoci", /* canale collegato: card mobile mostra 3 CTA */
       age: 24,
       videoCount: 1,
       photoCount: 12,
@@ -220,6 +249,7 @@
       name: "Martina",
       phone: "+39061000002",
       whatsapp: "39061000002",
+      telegram: null, /* canale non collegato: card mobile mostra solo 2 CTA (Chiama/WhatsApp) */
       age: 29,
       videoCount: 0,
       photoCount: 8,
@@ -240,6 +270,7 @@
       name: "Giada",
       phone: "+39061000003",
       whatsapp: "39061000003",
+      telegram: null,
       age: 31,
       videoCount: 2,
       photoCount: 20,
@@ -279,6 +310,16 @@
     if (listing.isOnlineOra) {
       html += '<span class="toplist-badge toplist-badge--neutral">ONLINE ORA<span class="toplist-badge__dot"></span></span>';
     }
+    html += buildAvailabilityBadgesHtml(listing);
+    return html;
+  }
+
+  /* Solo DISPONIBILE ORA/RISPONDO SUBITO, senza ONLINE ORA: nella card
+     mobile "ONLINE" è già mostrato come chip nella riga nome/età/foto
+     (vedi buildMobileCardHtml) — ripeterlo anche nei badge flottanti in
+     alto affollerebbe inutilmente lo spazio stretto sopra il bordo. */
+  function buildAvailabilityBadgesHtml(listing) {
+    var html = "";
     if (listing.isDisponibileSubito) {
       html += '<span class="toplist-badge toplist-badge--available">DISPONIBILE ORA</span>';
     }
@@ -290,7 +331,24 @@
 
   /* --------------------------------------------------------------------
      4) HTML DI UNA SINGOLA CARD
-     -------------------------------------------------------------------- */
+     Il layout mobile (Figma node 333:2882 senza Telegram / 596:12483 con
+     Telegram) è visivamente MOLTO diverso da quello desktop (chip
+     arrotondati invece di riga con separatori, badge di stato "flottanti"
+     sopra il bordo della card, galleria a riquadro singolo invece di
+     carosello con frecce, pulsanti CTA a tutta larghezza) — non è una
+     variante responsive dello stesso markup, è un secondo template a
+     parte (buildMobileCardHtml), mostrato/nascosto via CSS in base alla
+     larghezza (vedi style.css, sezione 3). Le REGOLE restano identiche
+     in entrambi i template: stessi flag letti (isOnlineOra,
+     isDisponibileSubito, isRispondoSubito, isToplist), stessi dati nelle
+     statistiche, stessi link Chiama/WhatsApp — quello che cambia è SOLO
+     la disposizione visiva, non quali dati vengono mostrati o quando.
+
+     I due template condividono un contenitore con "data-listing-id":
+     bindEvents() (più sotto) legge questo attributo con
+     closest("[data-listing-id]") invece di closest(".toplist-card"), così
+     gli stessi listener delegati funzionano IDENTICI sia sulla versione
+     desktop sia su quella mobile, senza bisogno di duplicare bindEvents. */
   function buildCardHtml(listing) {
     var priceTier = getPriceTier(listing.costPerHour);
 
@@ -300,7 +358,19 @@
     }
 
     return (
-      '<div class="toplist-card" data-listing-id="' + listing.id + '"' + borderStyle + '>' +
+      '<div class="toplist-card-container" data-listing-id="' + listing.id + '">' +
+        buildDesktopCardHtml(listing, priceTier, borderStyle) +
+        buildMobileCardHtml(listing, priceTier) +
+      "</div>"
+    );
+  }
+
+  /* Template desktop (Figma node 409:4482), invariato rispetto a prima —
+     solo spostato in una funzione a parte e senza più "data-listing-id"
+     sulla card stessa (ora sta sul contenitore comune, vedi sopra). */
+  function buildDesktopCardHtml(listing, priceTier, borderStyle) {
+    return (
+      '<div class="toplist-card"' + borderStyle + '>' +
 
         '<div class="toplist-card__header">' +
           '<div class="toplist-card__header-left">' +
@@ -367,6 +437,97 @@
             '<a href="tel:' + listing.phone + '" class="toplist-card__contact-button toplist-card__contact-button--call">' + ICON_CALL + "<span>Chiama</span></a>" +
             '<a href="https://wa.me/' + listing.whatsapp + '" target="_blank" rel="noopener" class="toplist-card__contact-button toplist-card__contact-button--whatsapp">' + ICON_WHATSAPP + "<span>WhatsApp</span></a>" +
           "</div>" +
+        "</div>" +
+
+      "</div>"
+    );
+  }
+
+  /* --------------------------------------------------------------------
+     4bis) TEMPLATE MOBILE (Figma node 333:2882 / 596:12483)
+     Riusa le stesse classi degli elementi INTERATTIVI del template
+     desktop (".toplist-card__favorite", ".toplist-card__stat",
+     ".toplist-card__contact-button") così bindEvents() non deve
+     distinguere quale template ha generato l'elemento cliccato — stesso
+     comportamento, solo aspetto diverso (classi "toplist-card-mobile__*"
+     dedicate). I badge di stato riusano ".toplist-badge" (stessi colori
+     del desktop, vedi buildStatusBadgesHtml) dentro un contenitore
+     "flottante" posizionato sopra il bordo della card (position:absolute,
+     vedi CSS) invece che inline nell'header come nel desktop.
+
+     Ordine statistiche DIVERSO dal desktop (Donazioni prima di
+     Recensioni): replica esattamente l'ordine del mockup Figma mobile.
+     "data-stat-type" resta invariato (stesse 5 chiavi), quindi
+     StatDetailModal.open() funziona senza modifiche.
+
+     Pulsante Telegram: presente SOLO se "listing.telegram" è valorizzato
+     (vedi schema dati sopra) — con 2 CTA i pulsanti Chiama/WhatsApp
+     occupano metà larghezza ciascuno, con 3 CTA un terzo ciascuno
+     (flex:1 0 0 in CSS, si adatta da solo al numero di pulsanti presenti,
+     nessun calcolo di larghezza nel JS). */
+  function buildMobileCardHtml(listing, priceTier) {
+    var hasTelegram = !!listing.telegram;
+
+    return (
+      '<div class="toplist-card-mobile">' +
+
+        '<div class="toplist-card-mobile__badges-float">' + buildAvailabilityBadgesHtml(listing) + "</div>" +
+        (listing.isToplist
+          ? '<div class="toplist-card-mobile__toplist-badge">' + ICON_STAR + "<span>TOPLIST</span></div>"
+          : "") +
+
+        '<div class="toplist-card-mobile__chips">' +
+          '<span class="toplist-card-mobile__chip">' + listing.name + "</span>" +
+          '<span class="toplist-card-mobile__chip">Età : ' + listing.age + "</span>" +
+          '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--icon">' + ICON_VIDEO + "<span>" + listing.videoCount + "</span></span>" +
+          '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--icon">' + ICON_PHOTO + "<span>" + listing.photoCount + "</span></span>" +
+          '<span class="toplist-card-mobile__chip toplist-card-mobile__chip--price">' + priceTier + "</span>" +
+          (listing.isOnlineOra
+            ? '<span class="toplist-badge toplist-badge--neutral">ONLINE<span class="toplist-badge__dot"></span></span>'
+            : "") +
+          '<button type="button" class="toplist-card__favorite toplist-card-mobile__favorite" aria-label="Aggiungi ai preferiti" aria-pressed="false">' + ICON_HEART_OUTLINE + "</button>" +
+        "</div>" +
+
+        '<div class="toplist-card-mobile__separator"></div>' +
+
+        '<div class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</div>" +
+
+        '<a href="#" class="toplist-card-mobile__body">' +
+          '<h3 class="toplist-card-mobile__title">' + listing.title + "</h3>" +
+          '<p class="toplist-card-mobile__description">' + listing.description + "</p>" +
+        "</a>" +
+
+        '<div class="toplist-card-mobile__separator"></div>' +
+
+        '<div class="toplist-card-mobile__stats">' +
+          '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="followers">' +
+            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">👥</span><b>' + listing.stats.followers + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-label">Follower</span>' +
+          "</button>" +
+          '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="reactions">' +
+            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">💬</span><b>' + listing.stats.reactions + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-label">Reazioni</span>' +
+          "</button>" +
+          '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="saved">' +
+            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">❤️</span><b>' + listing.stats.saved + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-label">Preferiti</span>' +
+          "</button>" +
+          '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="donations">' +
+            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">💸</span><b>' + listing.stats.donations + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-label">Donazioni</span>' +
+          "</button>" +
+          '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="reviews">' +
+            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">⭐</span><b>' + listing.stats.reviews + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-label">Recensioni</span>' +
+          "</button>" +
+        "</div>" +
+
+        '<div class="toplist-card-mobile__actions">' +
+          '<a href="tel:' + listing.phone + '" class="toplist-card__contact-button toplist-card-mobile__action toplist-card-mobile__action--call">' + ICON_CALL + "<span>Chiama</span></a>" +
+          (hasTelegram
+            ? '<a href="https://t.me/' + listing.telegram + '" target="_blank" rel="noopener" class="toplist-card__contact-button toplist-card-mobile__action toplist-card-mobile__action--telegram">' + ICON_TELEGRAM + "<span>Telegram</span></a>"
+            : "") +
+          '<a href="https://wa.me/' + listing.whatsapp + '" target="_blank" rel="noopener" class="toplist-card__contact-button toplist-card-mobile__action toplist-card-mobile__action--whatsapp">' + ICON_WHATSAPP + "<span>WhatsApp</span></a>" +
         "</div>" +
 
       "</div>"
@@ -500,7 +661,7 @@
          contratto completo. */
       self.$root.on("click" + ns, ".toplist-card__stat", function () {
         var type = $(this).data("stat-type");
-        var listingId = $(this).closest(".toplist-card").data("listing-id");
+        var listingId = $(this).closest("[data-listing-id]").data("listing-id");
         window.StatDetailModal.open(type, listingId);
       });
 
@@ -509,14 +670,26 @@
          NOTA: stato SOLO visivo/locale al browser (non persiste al
          reload, non chiama nessun endpoint) — la vera persistenza del
          "preferito" è lato Laravel, fuori scope per questo POC. Vedi
-         README per la nota di integrazione. */
-      self.$root.on("click" + ns, ".toplist-card__favorite", function () {
-        var $button = $(this);
-        var isActive = $button.hasClass("is-active");
+         README per la nota di integrazione.
 
-        $button.toggleClass("is-active", !isActive);
-        $button.attr("aria-pressed", String(!isActive));
-        $button.html(isActive ? ICON_HEART_OUTLINE : ICON_HEART_SOLID);
+         Ogni annuncio esiste in DUE copie nel DOM (template desktop +
+         template mobile, vedi buildCardHtml): solo una è visibile alla
+         volta via CSS, ma entrambe restano nel DOM. Aggiorniamo QUINDI
+         tutti i cuoricini con lo stesso "data-listing-id" (non solo
+         quello cliccato), così lo stato resta sincronizzato anche se
+         l'utente ridimensiona la finestra passando dall'una all'altra. */
+      self.$root.on("click" + ns, ".toplist-card__favorite", function () {
+        var $clicked = $(this);
+        var isActive = $clicked.hasClass("is-active");
+        var nextActive = !isActive;
+        var listingId = $clicked.closest("[data-listing-id]").data("listing-id");
+
+        self.$root
+          .find('[data-listing-id="' + listingId + '"]')
+          .find(".toplist-card__favorite")
+          .toggleClass("is-active", nextActive)
+          .attr("aria-pressed", String(nextActive))
+          .html(nextActive ? ICON_HEART_SOLID : ICON_HEART_OUTLINE);
       });
     },
 

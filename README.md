@@ -423,3 +423,54 @@ agli altri gap dell'header — così il cuoricino resta visibile senza dover
 scorrere già da ~900px in su, con lo scroll orizzontale che resta come
 riserva solo per le larghezze più strette (tablet/mobile).
 
+
+## Card mobile — template a parte, non un adattamento del desktop (Figma node 333:2882 / 596:12483)
+
+Sotto i 768px la card non è più una versione compressa di quella desktop:
+è un **secondo template HTML**, generato da `buildMobileCardHtml()` in
+`toplist-card.js` per ogni annuncio, in parallelo al template desktop
+(`buildDesktopCardHtml()`). I due template stanno entrambi nel DOM dentro
+lo stesso contenitore (`.toplist-card-container[data-listing-id]`); CSS
+mostra l'uno o l'altro in base alla larghezza (`.toplist-card` nascosta
+sotto 768px, `.toplist-card-mobile` nascosta sopra) — nessun ricalcolo
+lato JS al resize.
+
+**Le regole restano identiche tra i due template**: stessi flag letti
+(`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`),
+stesse 5 statistiche (ordine diverso: Donazioni prima di Recensioni sul
+mobile, replica esatta del mockup — le chiavi `data-stat-type` restano
+invariate, quindi `StatDetailModal` non richiede nessuna modifica), stessi
+link Chiama/WhatsApp. Cambia solo la disposizione visiva: chip arrotondati
+al posto della riga con separatori, badge di stato "flottanti" sopra il
+bordo della card invece che inline nell'header, galleria a riquadro
+singolo (nessuna freccia: sul mobile la navigazione foto sarà a swipe,
+come nello slider vetrine) invece del carosello con frecce/contatore,
+pulsanti CTA a tutta larghezza invece che a sinistra.
+
+Gli elementi INTERATTIVI del template mobile riusano le stesse classi di
+quello desktop (`.toplist-card__favorite`, `.toplist-card__stat`,
+`.toplist-card__contact-button`): `bindEvents()` non distingue da quale
+template viene l'elemento cliccato, un solo blocco di listener delegati
+copre entrambi.
+
+**Cuoricino preferiti sincronizzato tra le due copie**: poiché ogni
+annuncio esiste in due copie nel DOM (desktop + mobile, una sola visibile
+alla volta via CSS), il click sul cuoricino aggiorna **tutti** i pulsanti
+`.toplist-card__favorite` con lo stesso `data-listing-id`, non solo quello
+cliccato — altrimenti ridimensionando la finestra da mobile a desktop (o
+viceversa) lo stato "preferito" sembrerebbe perso.
+
+## Pulsante Telegram — condizionale, solo se l'inserzionista ha collegato il canale
+
+Il mockup mobile ha due varianti: **senza** Telegram (Figma node
+333:2882, solo Chiama + WhatsApp) e **con** Telegram (node 596:12483,
+Chiama + Telegram + WhatsApp) — la differenza è puramente il dato
+`listing.telegram` (nuovo campo, nullable): se valorizzato compare il
+terzo pulsante, altrimenti no. Nessun calcolo di larghezza nel JS: i
+pulsanti hanno tutti `flex: 1 0 0` in CSS, quindi si dividono lo spazio
+in automatico sia con 2 sia con 3 CTA presenti.
+
+In produzione questo campo arriva dallo stesso "toggle canali" dello Step
+1 del wizard di caricamento annuncio che già fornisce telefono/WhatsApp
+(vedi schema dati in `toplist-card.js`) — nessun nuovo step richiesto,
+solo un campo in più da quello step.

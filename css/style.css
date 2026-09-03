@@ -464,43 +464,233 @@
 }
 
 /* ============================================================================
-   3) RESPONSIVE — adattamento mobile
-   Il node Figma 409:4482 è SOLO desktop (riga fissa 1024px, nessuna
-   variante mobile fornita per questo componente, a differenza dello
-   slider vetrine che aveva un node dedicato 681:2090). L'adattamento qui
-   sotto è quindi una scelta ragionevole di chi scrive il codice, non una
-   traduzione 1:1 di un mockup: da confermare col design prima di andare
-   in produzione.
+   3) RESPONSIVE — card desktop vs card mobile
+   Sotto i 768px il layout non è più una versione "compressa" della card
+   desktop: è un template HTML del tutto diverso (vedi buildMobileCardHtml
+   in toplist-card.js, Figma node 333:2882/596:12483), generato in
+   parallelo alla card desktop per ogni annuncio e mostrato/nascosto qui
+   in base alla larghezza. Le regole sotto sono quindi solo show/hide,
+   non un adattamento del markup desktop.
    ============================================================================ */
+.toplist-card-mobile {
+  display: none;
+}
 @media (max-width: 767px) {
-  .toplist-card__content {
-    flex-direction: column;
+  .toplist-card {
+    display: none;
   }
-  .toplist-card__media {
-    flex: none;
-    max-width: none;
-    width: 100%;
-    min-height: 220px;
+  .toplist-card-mobile {
+    display: block;
   }
-  .toplist-card__header-right {
-    gap: 12px;
-  }
-  .toplist-card__footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .toplist-card__stats {
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .toplist-card__contact-actions {
-    justify-content: stretch;
-  }
-  .toplist-card__contact-button {
-    flex: 1 1 50%;
-    justify-content: center;
-    padding: 9px 12px;
-  }
+}
+
+/* ---- 3.1) Contenitore card mobile (Figma node 333:2882) -----------------
+   Bordo grigio spesso (non 1px come il desktop) + radius pronunciato +
+   ombra leggera: valori ESATTI dal node Figma. position:relative perché i
+   badge di stato/TOPLIST sono "flottanti" sopra il bordo superiore
+   (position:absolute, vedi 3.2). */
+.toplist-card-mobile {
+  position: relative;
+  background: #fff;
+  border: 4px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  margin-top: 14px; /* spazio per i badge flottanti (top:-14px) senza tagliarli */
+}
+
+/* ---- 3.2) Badge di stato/TOPLIST flottanti sopra il bordo ---------------
+   Riusano ".toplist-badge"/".toplist-card__toplist-flag"? No: il badge
+   TOPLIST mobile ha uno stile diverso dal desktop (Figma: sfondo bianco,
+   bordo grigio, testo grigio, NON il chip rosa del desktop) — stile
+   dedicato sotto. I badge di stato invece riusano ESATTAMENTE
+   ".toplist-badge" (stessi colori reali già scelti per il desktop, vedi
+   sezione 2.1): stesso significato, stesso colore, cambia solo la
+   posizione (flottante invece che inline nell'header). */
+.toplist-card-mobile__badges-float {
+  position: absolute;
+  left: 8px;
+  top: -14px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  z-index: 1;
+}
+.toplist-card-mobile__toplist-badge {
+  position: absolute;
+  right: 8px;
+  top: -14px;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 9999px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  padding: 3px 9px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---- 3.3) Riga di chip (nome/età/video/foto/prezzo/online) --------------
+   Stessi dati della riga "header-left" desktop, come chip arrotondati
+   invece che testo con separatori — replica il node Figma 333:2882. Il
+   cuoricino preferiti riusa ".toplist-card__favorite" (stessa interazione
+   del desktop, vedi toplist-card.js) spinto a fine riga con margin-left:auto. */
+.toplist-card-mobile__chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.toplist-card-mobile__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: #e5e7eb;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+}
+.toplist-card-mobile__chip--price {
+  font-weight: 700;
+}
+.toplist-card-mobile__favorite {
+  margin-left: auto;
+}
+
+.toplist-card-mobile__separator {
+  border-top: 1px solid #e5e7eb;
+  width: 100%;
+}
+
+/* ---- 3.4) Galleria foto: riquadro singolo con icona, no carosello -------
+   Il mockup mobile non ha frecce/contatore (lo swipe sostituisce i
+   pulsanti, come nello slider vetrine): un solo box con un'icona
+   "immagine" centrata, in attesa della foto reale. */
+.toplist-card-mobile__gallery {
+  width: 100%;
+  height: 256px;
+  border-radius: 10px;
+  background: #e5e7eb;
+  color: #9ca3af;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toplist-card-mobile__body {
+  display: block;
+  width: 100%;
+  text-decoration: none;
+  color: inherit;
+}
+.toplist-card-mobile__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1c1c;
+}
+.toplist-card-mobile__description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #000;
+  /* Troncata su 2 righe (Figma mostra "...") invece di un'unica riga: a
+     differenza della card desktop, qui c'è spazio verticale per due righe
+     prima dello stacco successivo. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- 3.5) Statistiche: 5 colonne con divisori verticali -----------------
+   Stessa interazione della riga statistiche desktop (".toplist-card__stat",
+   click delegato in bindEvents), solo disposizione diversa: colonne
+   uguali con bordo verticale tra una e l'altra invece di gap semplice. */
+.toplist-card-mobile__stats {
+  display: flex;
+  width: 100%;
+}
+.toplist-card-mobile__stat {
+  flex: 1 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  background: none;
+  border: none;
+  border-left: 1px solid #f3f4f6;
+  cursor: pointer;
+  color: inherit;
+  font-family: inherit;
+}
+.toplist-card-mobile__stat:first-child {
+  border-left: none;
+}
+.toplist-card-mobile__stat-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+}
+.toplist-card-mobile__stat-emoji {
+  display: inline-flex;
+  align-items: center;
+  height: 14px;
+  line-height: 14px;
+  font-size: 12px;
+  overflow: hidden;
+}
+.toplist-card-mobile__stat-label {
+  font-size: 9px;
+  color: #9ca3af;
+}
+
+/* ---- 3.6) Pulsanti CTA a tutta larghezza, uguali tra loro ---------------
+   "flex:1 0 0" su tutti e tre i pulsanti: con 2 CTA (Telegram assente,
+   vedi buildMobileCardHtml) occupano metà larghezza ciascuno, con 3 CTA
+   un terzo — nessun calcolo di larghezza nel JS, si adatta da solo al
+   numero di elementi presenti nel DOM. */
+.toplist-card-mobile__actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.toplist-card-mobile__action {
+  flex: 1 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  font-size: 14px;
+  font-weight: 700;
+}
+.toplist-card-mobile__action--call {
+  background: #1f2937;
+  color: #fff;
+}
+.toplist-card-mobile__action--telegram,
+.toplist-card-mobile__action--whatsapp {
+  background: #e5e7eb;
+  color: #1f2937;
 }
 
 /* ============================================================================
