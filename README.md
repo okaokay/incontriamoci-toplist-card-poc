@@ -449,10 +449,15 @@ il testo breve **"ONLINE"** (non "ONLINE ORA" come sul desktop) — è
 l'unico modo per restare nella larghezza esatta di riga del node Figma
 (`691:1021`, 328px su una card da 360px) e stare su **una riga sola**
 insieme agli altri badge di stato, come nel mockup: con l'etichetta
-intera non ci sta e va a capo. Stesse 5 statistiche (ordine diverso:
-Donazioni prima di Recensioni sul mobile, replica esatta del mockup — le
-chiavi `data-stat-type` restano invariate, quindi `StatDetailModal` non
-richiede nessuna modifica), stessi link Chiama/WhatsApp. Cambia la
+intera non ci sta e va a capo. Stesse 5 statistiche, **con le stesse
+icone SVG del desktop** (Follower/Preferiti/Donazioni/Recensioni — il
+mockup Figma mobile mostrava emoji generiche per queste 4, ma era un
+artefatto di esportazione, non una scelta di design, confermato dal
+cliente; "Reazioni" resta emoji anche sul desktop, quindi qui è identica)
+e stesso ordine diverso dal desktop (Donazioni prima di Recensioni sul
+mobile, replica esatta del mockup — le chiavi `data-stat-type` restano
+invariate, quindi `StatDetailModal` non richiede nessuna modifica),
+stessi link Chiama/WhatsApp. Cambia la
 disposizione visiva: chip arrotondati al posto della riga con
 separatori, gruppo flottante in alto a sinistra con TOPLIST **e la
 fascia prezzo affiancati** (su richiesta del cliente — sul desktop il

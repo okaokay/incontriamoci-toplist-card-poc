@@ -554,25 +554,33 @@
 
         '<div class="toplist-card-mobile__separator"></div>' +
 
+        /* Icone IDENTICHE al desktop (ICON_FOLLOWERS/ICON_SAVED/
+           ICON_DONATIONS/ICON_REVIEWS_OUTLINE, path SVG esatti dal node
+           Figma 516:9277), non le emoji generiche del mockup mobile
+           statico — su richiesta del cliente. "Reazioni" resta emoji
+           anche sul desktop (non ha un'icona SVG nel mockup originale),
+           quindi qui è la STESSA emoji ICON_REACTIONS_EMOJI ("🖤😐"), non
+           quella diversa ("💬") usata prima. Ordine statistiche resta
+           quello mobile (Donazioni prima di Recensioni). */
         '<div class="toplist-card-mobile__stats">' +
           '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="followers">' +
-            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">👥</span><b>' + listing.stats.followers + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-value">' + ICON_FOLLOWERS + "<b>" + listing.stats.followers + "</b></span>" +
             '<span class="toplist-card-mobile__stat-label">Follower</span>' +
           "</button>" +
           '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="reactions">' +
-            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">💬</span><b>' + listing.stats.reactions + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">' + ICON_REACTIONS_EMOJI + "</span><b>" + listing.stats.reactions + "</b></span>" +
             '<span class="toplist-card-mobile__stat-label">Reazioni</span>' +
           "</button>" +
           '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="saved">' +
-            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">❤️</span><b>' + listing.stats.saved + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-value">' + ICON_SAVED + "<b>" + listing.stats.saved + "</b></span>" +
             '<span class="toplist-card-mobile__stat-label">Preferiti</span>' +
           "</button>" +
           '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="donations">' +
-            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">💸</span><b>' + listing.stats.donations + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-value">' + ICON_DONATIONS + "<b>" + listing.stats.donations + "</b></span>" +
             '<span class="toplist-card-mobile__stat-label">Donazioni</span>' +
           "</button>" +
           '<button type="button" class="toplist-card__stat toplist-card-mobile__stat" data-stat-type="reviews">' +
-            '<span class="toplist-card-mobile__stat-value"><span class="toplist-card-mobile__stat-emoji">⭐</span><b>' + listing.stats.reviews + "</b></span>" +
+            '<span class="toplist-card-mobile__stat-value">' + ICON_REVIEWS_OUTLINE + "<b>" + listing.stats.reviews + "</b></span>" +
             '<span class="toplist-card-mobile__stat-label">Recensioni</span>' +
           "</button>" +
         "</div>" +
