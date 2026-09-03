@@ -666,6 +666,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* "pan-y": lo scroll verticale della pagina resta gestito nativamente
+     dal browser, il trascinamento ORIZZONTALE (swipe per cambiare foto,
+     vedi bindEvents in toplist-card.js) è gestito dal nostro JS via
+     Pointer Events. Senza questa riga, su alcuni browser mobile il primo
+     movimento del dito può essere interpretato come uno scroll di pagina
+     e "rubare" l'evento prima che il nostro swipe venga riconosciuto. */
+  touch-action: pan-y;
 }
 
 .toplist-card-mobile__body {

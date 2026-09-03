@@ -503,6 +503,26 @@
      Pulsante Telegram: presente SOLO se "listing.telegram" è valorizzato
      — con 2 CTA i pulsanti occupano metà larghezza ciascuno, con 3 CTA
      un terzo (flex:1 0 0 in CSS, nessun calcolo nel JS). */
+  /* Avanza/arretra il contatore "N/tot" di un carosello foto di una
+     posizione, con clamp ai bordi (non supera mai 1 o il totale).
+     Condivisa tra il click sulle frecce e lo swipe touch/mouse (vedi
+     bindEvents, sezione CAROSELLO FOTO): stessa identica logica, cambia
+     solo COSA la richiama. */
+  function stepCarouselCounter($media, direction) {
+    var $counter = $media.find(".toplist-card__photo-counter");
+    var parts = $counter.text().split("/");
+    var current = parseInt(parts[0], 10);
+    var total = parseInt(parts[1], 10);
+
+    if (direction === "next") {
+      current = Math.min(total, current + 1);
+    } else {
+      current = Math.max(1, current - 1);
+    }
+
+    $counter.text(current + "/" + total);
+  }
+
   function buildMobileStatusBadgesHtml(listing) {
     var html = "";
     if (listing.isDisponibileSubito) {
@@ -707,7 +727,13 @@
        scorrere visivamente (il placeholder resta lo stesso), ma la logica
        di avanzamento/indietro/clamp ai bordi è quella vera, pronta per
        quando ci saranno gli URL delle foto reali (vedi README).
-       -------------------------------------------------------------------- */
+
+       Su mobile la navigazione non è solo a frecce: si può anche
+       trascinare col dito (swipe), su richiesta del cliente — le frecce
+       da sole non bastano su un componente mobile, l'utente si aspetta
+       di poter scorrere la galleria come farebbe con qualunque carosello
+       di foto (Instagram, Storie, ecc.). Vedi più sotto per i dettagli
+       dell'implementazione touch. */
     bindEvents: function () {
       var self = this;
       var ns = "." + self.instanceId;
@@ -715,19 +741,60 @@
       self.$root.on("click" + ns, ".toplist-card__carousel-arrow", function () {
         var $arrow = $(this);
         var $media = $arrow.closest(".toplist-card__media");
-        var $counter = $media.find(".toplist-card__photo-counter");
+        stepCarouselCounter($media, $arrow.hasClass("toplist-card__carousel-arrow--next") ? "next" : "prev");
+      });
 
-        var parts = $counter.text().split("/");
-        var current = parseInt(parts[0], 10);
-        var total = parseInt(parts[1], 10);
+      /* Swipe/trascinamento sulla foto mobile (Pointer Events: un'unica
+         API per touch, mouse e penna, niente bisogno di gestirli
+         separatamente). "touch-action: pan-y" in CSS lascia lo scroll
+         verticale della pagina nativo del browser — qui intercettiamo
+         SOLO il movimento orizzontale.
 
-        if ($arrow.hasClass("toplist-card__carousel-arrow--next")) {
-          current = Math.min(total, current + 1);
-        } else {
-          current = Math.max(1, current - 1);
+         "swipeMoved" distingue un vero swipe da un semplice tap: se il
+         dito si è spostato oltre la soglia, il successivo evento "click"
+         sulla foto viene annullato (altrimenti, oltre a cambiare foto,
+         l'utente finirebbe anche sulla pagina del profilo per il click
+         che il browser genera comunque a fine trascinamento). */
+      var SWIPE_THRESHOLD = 40;
+      var swipeStartX = null;
+      var swipeMoved = false;
+
+      self.$root.on("pointerdown" + ns, ".toplist-card-mobile__gallery", function (e) {
+        swipeStartX = e.originalEvent.clientX;
+        swipeMoved = false;
+      });
+
+      self.$root.on("pointermove" + ns, ".toplist-card-mobile__gallery", function (e) {
+        if (swipeStartX === null) {
+          return;
         }
+        if (Math.abs(e.originalEvent.clientX - swipeStartX) > SWIPE_THRESHOLD) {
+          swipeMoved = true;
+        }
+      });
 
-        $counter.text(current + "/" + total);
+      self.$root.on("pointerup" + ns + " pointercancel" + ns, ".toplist-card-mobile__gallery", function (e) {
+        if (swipeStartX === null) {
+          return;
+        }
+        var deltaX = e.originalEvent.clientX - swipeStartX;
+        swipeStartX = null;
+
+        if (Math.abs(deltaX) < SWIPE_THRESHOLD) {
+          return; // spostamento troppo piccolo: è un tap, non uno swipe
+        }
+        var $media = $(this).closest(".toplist-card__media");
+        stepCarouselCounter($media, deltaX < 0 ? "next" : "prev");
+      });
+
+      /* Il link alla pagina del profilo non deve attivarsi se il click
+         che il browser genera a fine trascinamento arriva dopo uno
+         swipe riuscito (vedi sopra) — solo un tap "pulito" naviga. */
+      self.$root.on("click" + ns, ".toplist-card-mobile__gallery", function (e) {
+        if (swipeMoved) {
+          e.preventDefault();
+          swipeMoved = false;
+        }
       });
 
       /* Collegamento contatori → modali. Un solo listener delegato sul

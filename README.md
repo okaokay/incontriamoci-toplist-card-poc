@@ -481,6 +481,22 @@ richiesto nessuna modifica — il contenitore media porta ENTRAMBE le
 classi `.toplist-card__media`/`.toplist-card-mobile__media` (la prima per
 l'aggancio agli eventi esistenti, la seconda per le dimensioni mobile).
 
+**La galleria mobile si scorre anche col dito (swipe), non solo con le
+frecce**: il cliente ha chiesto entrambe le modalità, non l'una in
+alternativa all'altra — coerente con come funziona qualunque carosello
+foto su mobile (Instagram, Storie, ecc.). Implementato con i **Pointer
+Events** (`pointerdown`/`pointermove`/`pointerup`, un'unica API per
+touch/mouse/penna, niente branching su `touchstart` vs `mousedown`),
+delegati su `.toplist-card-mobile__gallery` in `bindEvents()`. La stessa
+funzione `stepCarouselCounter()` usata dal click sulle frecce viene
+richiamata anche dallo swipe — nessuna logica duplicata. `touch-action:
+pan-y` sulla foto lascia lo scroll verticale della pagina nativo del
+browser, intercettando solo il trascinamento orizzontale. Uno swipe
+riuscito (spostamento oltre una soglia minima) annulla anche il click di
+navigazione che il browser genera comunque a fine trascinamento — senza
+questo accorgimento, oltre a cambiare foto l'utente finirebbe anche sulla
+pagina del profilo per sbaglio.
+
 **Foto della galleria e titolo dell'annuncio sono link cliccabili** verso
 la pagina personale dell'inserzionista (`listing.profileUrl`, stesso
 concetto già usato nel componente slider vetrine per foto/nome): valore
