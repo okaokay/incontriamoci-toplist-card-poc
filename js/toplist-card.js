@@ -1,5 +1,5 @@
 /* ============================================================================
-   TOPLIST CARD — logica jQuery
+   TOPLIST CARD — jQuery Plugin ($.fn.toplistCard)
    Riferimento Figma: node 409:4482 ("Toplist Item 1"). Card annuncio in
    evidenza a pagamento: badge di stato, carosello foto, titolo/descrizione,
    riga statistiche cliccabile (apre le modali di stat-detail-modal.js) e
@@ -7,10 +7,27 @@
 
    File autonomo, dipende solo da jQuery + StatDetailModal (vedi
    stat-detail-modal.js, caricato prima di questo in index.html).
+
+   Riscritto come plugin jQuery (stesso pattern $.fn dello slider vetrine,
+   vedi il README di quel componente per il file di riferimento fornito
+   dal senior) così è possibile montare più liste TopList sulla stessa
+   pagina, ciascuna con la propria sorgente dati (es. "TopList Roma" e
+   "TopList Milano" in due sezioni diverse), invece che un unico
+   "#toplistList" fisso con i dati finti incollati nel file.
    ============================================================================ */
 
 (function ($) {
   "use strict";
+
+  var PLUGIN_NAME = "toplistCard";
+
+  /* Contatore per generare un id INTERNO univoco per ogni istanza, usato
+     per namespacizzare gli eventi delegati (bindCarouselEvents,
+     bindStatEvents, bindFavoriteEvents): senza, destroy() su un'istanza
+     rischierebbe di togliere gli event handler anche di un'altra lista
+     TopList presente sulla stessa pagina — stesso identico problema (e
+     stessa soluzione) del plugin vetrineSlider, vedi il suo README. */
+  var instanceCounter = 0;
 
   /* --------------------------------------------------------------------
      0) ICONE (SVG inline, fill="currentColor")
@@ -39,7 +56,7 @@
   /* Cuoricino "preferiti": DUE varianti Font Awesome Free 6.7.2 ufficiali
      (non un'unica forma riusata con solo "fill" diverso, perché il
      contorno vuoto e quello pieno hanno path DIVERSI, non sono la stessa
-     forma con outline vs riempimento) — vedi buildFavoriteIconHtml() più
+     forma con outline vs riempimento) — vedi bindFavoriteEvents più
      sotto per come vengono scambiate al click. */
   var ICON_HEART_OUTLINE = /* Font Awesome "heart" (regular) */
     '<svg viewBox="0 0 512 512" width="16" height="15" fill="currentColor" aria-hidden="true">' +
@@ -121,32 +138,28 @@
        - id            → listings.id (o listings.uuid)
        - name          → campo "nome d'arte", Step 1 "Info Base" del wizard
                           di caricamento annuncio (doc, sezione 2.1, node
-                          Figma 577:7224) — CAMPO AGGIUNTO DOPO la prima
-                          versione della card, segnalato dal cliente come
-                          dato mancante: senza, non si capisce DI CHI è
-                          l'annuncio.
+                          Figma 577:7224)
+       - phone/whatsapp → campo "telefono"/canale WhatsApp, Step 1 "Info
+                          Base" (sezione 2.1, "toggle canali") — usati dai
+                          pulsanti Chiama (tel:) e WhatsApp (wa.me) nel
+                          footer. "whatsapp" deve essere SOLO cifre
+                          (formato internazionale senza "+", richiesto da
+                          wa.me), "phone" può includere il "+".
        - age           → campo "età", Step 1 "Info Base" (sezione 2.1)
        - videoCount    → count di listing_media dove type = "video"
                           (caricato nello Step 2 "Media & Tag", sezione 2.2)
        - photoCount    → photos.length (vedi "photos" più sotto)
        - costPerHour   → campo tag "prezzo/ora", Step 2 "Media & Tag"
                           (doc, sezione 2.2) — la fascia "€"/"€€"/"€€€"
-                          mostrata sulla card NON è più un valore fisso:
-                          viene CALCOLATA da questo numero tramite
-                          getPriceTier() qui sotto, così la card riflette
-                          sempre il prezzo/ora vero inserito
-                          dall'inserzionista invece di un tag scollegato
-                          dal dato reale.
+                          mostrata sulla card è CALCOLATA da questo numero
+                          tramite getPriceTier() qui sotto.
        - title         → campo "titolo", Step 1 "Info Base" (sezione 2.1)
        - description   → campo "descrizione", Step 1 "Info Base" (sezione 2.1)
        - photos[]      → galleria caricata nello Step 2 "Media & Tag"
-                          (dropzone immagini, doc sezione 2.2) — qui è già
-                          un ARRAY (non solo un conteggio, vedi punto 2bis
-                          "PLACEHOLDER_PHOTOS" più sotto): in produzione
-                          ogni elemento avrà almeno {id, url}, ordinate con
-                          la prima = quella scelta come preview_media_id
-                          (doc, sezione 6.3). Il primo elemento con id
-                          uguale a preview_media_id va per primo.
+                          (dropzone immagini, doc sezione 2.2) — in
+                          produzione ogni elemento avrà almeno {id, url},
+                          ordinate con la prima = quella scelta come
+                          preview_media_id (doc, sezione 6.3).
        - stats         → COUNT delle relazioni listing→followers/reactions/
                           savedBy/reviews/donations (stesse relazioni già
                           documentate per le modali, vedi stat-detail-modal.js)
@@ -154,24 +167,17 @@
          isRispondoSubito → FUORI SCOPE qui (sola lettura): impostati dal
          futuro pannello opzioni "In risalto", vedi punto 1 sopra e README.
 
-     Il badge "NEW" della prima versione è stato RIMOSSO su richiesta
-     esplicita (non serviva) — non fa più parte dello schema dati.
-
      fetchListings() più sotto è l'UNICO punto che produce questi dati:
      oggi restituisce l'array finto, in produzione diventerà una vera
      chiamata (es. $.get("/api/annunci?categoria=roma")) — stessa identica
      idea già usata in fetchVetrinePage (slider vetrine) e fetchStatRows
      (modali di questo stesso componente). Nessun altro punto del file
      legge MOCK_LISTINGS direttamente: così il senior deve toccare UNA
-     funzione sola per collegare i dati veri, non cercarli sparsi nel file. */
-
-  /* --------------------------------------------------------------------
-     2bis) FASCIA PREZZO CALCOLATA DAL COSTO/ORA REALE
-     Sostituisce il vecchio campo fisso "priceTier": ora la card riceve
-     "costPerHour" (il dato realmente catturato, vedi sopra) e calcola da
-     sola quanti simboli "€" mostrare. Soglie di esempio, DA CONFERMARE
-     col cliente/senior — non sono valori ufficiali di business. */
+     funzione sola per collegare i dati veri, non cercarli sparsi nel file.
+     -------------------------------------------------------------------- */
   function getPriceTier(costPerHour) {
+    /* Soglie di esempio, DA CONFERMARE col cliente/senior — non sono
+       valori ufficiali di business. */
     if (costPerHour >= 150) {
       return "€€€";
     }
@@ -181,10 +187,10 @@
     return "€";
   }
 
-  /* Placeholder per l'array foto (vedi "photos[]" sopra): in questo POC
-     bastano oggetti minimi con un id, non avendo foto reali da mostrare
-     (il carosello, come già oggi, aggiorna solo il contatore "1/N" — vedi
-     bindCarouselEvents). In produzione ogni oggetto avrà anche "url". */
+  /* Placeholder per l'array foto: in questo POC bastano oggetti minimi
+     con un id, non avendo foto reali da mostrare (il carosello aggiorna
+     solo il contatore "1/N" — vedi bindCarouselEvents). In produzione
+     ogni oggetto avrà anche "url". */
   function buildPlaceholderPhotos(count) {
     var photos = [];
     for (var i = 1; i <= count; i++) {
@@ -197,6 +203,8 @@
     {
       id: "listing-1",
       name: "Sofia",
+      phone: "+39061000001",     /* per il pulsante Chiama (tel:) */
+      whatsapp: "39061000001",   /* per il pulsante WhatsApp (wa.me, SOLO cifre) */
       age: 24,
       videoCount: 1,
       photoCount: 12,
@@ -215,6 +223,8 @@
     {
       id: "listing-2",
       name: "Martina",
+      phone: "+39061000002",
+      whatsapp: "39061000002",
       age: 29,
       videoCount: 0,
       photoCount: 8,
@@ -233,6 +243,8 @@
     {
       id: "listing-3",
       name: "Giada",
+      phone: "+39061000003",
+      whatsapp: "39061000003",
       age: 31,
       videoCount: 2,
       photoCount: 20,
@@ -251,38 +263,31 @@
   ];
 
   /* Punto di aggancio per il senior: oggi restituisce l'array finto qui
-     sopra, in produzione diventerà una vera chiamata al backend, es.
+     sopra (anche come Promise già risolta, vedi $.when() nel plugin, per
+     restare coerente con lo stesso pattern del plugin vetrineSlider), in
+     produzione diventerà una vera chiamata al backend, es.
 
          function fetchListings(categoria) {
            return $.get("/api/annunci", { categoria: categoria });
          }
 
-     Nessun'altra parte del file legge MOCK_LISTINGS direttamente (vedi
-     punto 7, inizializzazione): tutte le card passano da qui. */
+     Nessun'altra parte del file legge MOCK_LISTINGS direttamente. */
   function fetchListings() {
     return MOCK_LISTINGS;
   }
 
   /* --------------------------------------------------------------------
      3) HTML DEI BADGE DI STATO (header, in alto a destra)
-     Estratta a parte perché, come per lo slider vetrine, questi stessi
-     flag sono quelli che il FUTURO pannello opzioni permetterà di
-     attivare/disattivare — se in futuro serve rigenerare solo i badge
-     (es. aggiornamento realtime di "Online Ora"), questa funzione è già
-     pronta per essere riusata così com'è. */
+     -------------------------------------------------------------------- */
   function buildStatusBadgesHtml(listing) {
     var html = "";
     if (listing.isOnlineOra) {
       html += '<span class="toplist-badge toplist-badge--neutral">ONLINE ORA<span class="toplist-badge__dot"></span></span>';
     }
     if (listing.isDisponibileSubito) {
-      /* Verde: colore confermato dalla documentazione (sezione 6.2.3), il
-         mockup Figma statico mostra questo badge in grigio neutro come
-         placeholder — qui usiamo il colore reale richiesto. */
       html += '<span class="toplist-badge toplist-badge--available">DISPONIBILE ORA</span>';
     }
     if (listing.isRispondoSubito) {
-      /* Blu: stessa nota di cui sopra, colore da documentazione. */
       html += '<span class="toplist-badge toplist-badge--fast-reply">RISPONDO SUBITO</span>';
     }
     return html;
@@ -292,29 +297,16 @@
      4) HTML DI UNA SINGOLA CARD
      -------------------------------------------------------------------- */
   function buildCardHtml(listing) {
-    /* Fascia prezzo calcolata dal costo/ora reale, non più un valore fisso
-       — vedi getPriceTier() e il commento sullo schema dati (punto 2). */
     var priceTier = getPriceTier(listing.costPerHour);
 
     var borderStyle = "";
     if (listing.isBordo && listing.coloreBordo && BORDER_COLOR_PALETTE[listing.coloreBordo]) {
-      /* Bordo colorato attorno all'intera card (docx 6.2.2): applicato
-         come inline style perché il colore è dinamico (uno tra 9 valori
-         possibili, scelto dall'inserzionista nel futuro pannello opzioni)
-         — non ha senso creare 9 classi CSS diverse per questo. */
       borderStyle = ' style="border-color: ' + BORDER_COLOR_PALETTE[listing.coloreBordo] + '; border-width: 2px;"';
     }
 
     return (
       '<div class="toplist-card" data-listing-id="' + listing.id + '"' + borderStyle + '>' +
 
-        /* ---- Header: nome inserzionista + età/video/foto/prezzo + badge di stato + TOPLIST/preferiti ----
-           Il nome è il PRIMO elemento: è il dato più importante
-           dell'header (senza, non si capisce di chi è l'annuncio) —
-           segnalato dal cliente, mancava nella prima versione della card
-           (il node Figma 409:4482 non lo includeva nell'header, solo un
-           placeholder di titolo nel corpo). Il badge "NEW" della prima
-           versione è stato rimosso su richiesta esplicita. */
         '<div class="toplist-card__header">' +
           '<div class="toplist-card__header-left">' +
             '<span class="toplist-card__name">' + listing.name + "</span>" +
@@ -329,17 +321,11 @@
               (listing.isToplist
                 ? '<span class="toplist-card__toplist-flag">' + ICON_STAR + "<span>TOPLIST</span></span>"
                 : "") +
-              /* Cuoricino preferiti: parte sempre vuoto/outline (non
-                 leggiamo un flag "isFavorite" dai dati finti, perché è lo
-                 stato di preferenza DELL'UTENTE che guarda la pagina in
-                 quel momento, non un dato dell'annuncio — vedi
-                 bindFavoriteEvents più sotto per la logica del toggle). */
               '<button type="button" class="toplist-card__favorite" aria-label="Aggiungi ai preferiti" aria-pressed="false">' + ICON_HEART_OUTLINE + "</button>" +
             "</div>" +
           "</div>" +
         "</div>" +
 
-        /* ---- Media + corpo: foto con carosello a sinistra, titolo/descrizione a destra ---- */
         '<div class="toplist-card__content">' +
           '<div class="toplist-card__media">' +
             '<div class="toplist-card__photo-placeholder"></div>' +
@@ -353,25 +339,13 @@
           "</a>" +
         "</div>" +
 
-        /* ---- Footer: 5 contatori cliccabili (aprono le modali) + pulsanti Chiama/WhatsApp ---- */
         '<div class="toplist-card__footer">' +
           '<div class="toplist-card__stats">' +
-            /* Etichette in italiano, testo IDENTICO a quello del node Figma
-               516:9277 (mostrato dal cliente): "Follower" non "Followers",
-               ecc. — prima erano rimaste in inglese per errore quando erano
-               state aggiornate solo le icone, non i testi. */
             '<button type="button" class="toplist-card__stat" data-stat-type="followers">' +
               '<span class="toplist-card__stat-value">' + ICON_FOLLOWERS + "<b>" + listing.stats.followers + "</b></span>" +
               '<span class="toplist-card__stat-label">Follower</span>' +
             "</button>" +
             '<button type="button" class="toplist-card__stat" data-stat-type="reactions">' +
-              /* L'emoji è avvolta in un suo span di dimensione FISSA
-                 (.toplist-card__stat-emoji-icon, vedi style.css): i font
-                 emoji hanno una "altezza di riga" naturale più alta delle
-                 icone SVG a parità di font-size, e senza questo wrapper la
-                 riga "Reazioni" risultava più alta delle altre 4,
-                 spingendo la sua etichetta più in basso e disallineandola
-                 dal resto della riga statistiche. */
               '<span class="toplist-card__stat-value">' +
                 '<span class="toplist-card__stat-emoji-icon">' + ICON_REACTIONS_EMOJI + "</span>" +
                 "<b>" + listing.stats.reactions + "</b>" +
@@ -392,8 +366,15 @@
             "</button>" +
           "</div>" +
           '<div class="toplist-card__contact-actions">' +
-            '<button type="button" class="toplist-card__contact-button toplist-card__contact-button--call">' + ICON_CALL + "<span>Chiama</span></button>" +
-            '<button type="button" class="toplist-card__contact-button toplist-card__contact-button--whatsapp">' + ICON_WHATSAPP + "<span>WhatsApp</span></button>" +
+            /* Link reali (href), non <button> senza azione: prima questi
+               due pulsanti non facevano NULLA al click (nessun href,
+               nessun handler) — gap notato in review mentre si applicava
+               qui lo stesso fix già fatto per lo slider vetrine (link
+               "tel:"/wa.me invece di generici pulsanti). Il numero per
+               wa.me deve essere SOLO cifre (formato internazionale senza
+               "+", vedi campo "whatsapp" nei dati finti sopra). */
+            '<a href="tel:' + listing.phone + '" class="toplist-card__contact-button toplist-card__contact-button--call">' + ICON_CALL + "<span>Chiama</span></a>" +
+            '<a href="https://wa.me/' + listing.whatsapp + '" target="_blank" rel="noopener" class="toplist-card__contact-button toplist-card__contact-button--whatsapp">' + ICON_WHATSAPP + "<span>WhatsApp</span></a>" +
           "</div>" +
         "</div>" +
 
@@ -402,98 +383,208 @@
   }
 
   /* --------------------------------------------------------------------
-     5) CAROSELLO FOTO
-     Per questo POC il carosello cambia solo il NUMERO nel contatore
-     ("1/5" -> "2/5" ecc.): non avendo foto reali, non c'è nulla da far
-     scorrere visivamente (il placeholder resta lo stesso), ma la logica
-     di avanzamento/indietro/clamp ai bordi è quella vera, pronta per
-     quando ci saranno gli URL delle foto reali (vedi README).
+     5) OPZIONI PREDEFINITE (DEFAULTS)
      -------------------------------------------------------------------- */
-  function bindCarouselEvents($list) {
-    $list.on("click", ".toplist-card__carousel-arrow", function () {
-      var $arrow = $(this);
-      var $media = $arrow.closest(".toplist-card__media");
-      var $counter = $media.find(".toplist-card__photo-counter");
+  var DEFAULTS = {
+    fetchListings: null
+  };
 
-      var parts = $counter.text().split("/");
-      var current = parseInt(parts[0], 10);
-      var total = parseInt(parts[1], 10);
+  /* --------------------------------------------------------------------
+     6) COSTRUTTORE DEL PLUGIN
+     Ogni chiamata a $(selector).toplistCard(options) crea UNA istanza di
+     questa classe per ciascun elemento selezionato (vedi in fondo,
+     $.fn.toplistCard, che fa ".each()" sulla collezione jQuery).
+     "options.fetchListings" = funzione () => Array<listing> (o una
+     Promise/jqXHR che si risolve con quell'array).
+     -------------------------------------------------------------------- */
+  function Plugin(element, options) {
+    var self = this;
+    self.element = element;
+    self.$root = $(element);
+    self.options = $.extend({}, DEFAULTS, options);
 
-      if ($arrow.hasClass("toplist-card__carousel-arrow--next")) {
-        current = Math.min(total, current + 1);
+    if (typeof self.options.fetchListings !== "function") {
+      $.error("toplistCard: è necessario fornire una funzione 'fetchListings' nelle opzioni.");
+      return;
+    }
+
+    /* Id interno univoco per questa istanza, usato per namespacizzare
+       tutti gli eventi delegati — stessa soluzione del plugin
+       vetrineSlider (vedi il suo README per il dettaglio del problema
+       che risolve: destroy() sicuro anche con più liste TopList sulla
+       stessa pagina, montate su una classe invece che su id univoci). */
+    self.instanceId = PLUGIN_NAME + "-" + (++instanceCounter);
+
+    self.init();
+  }
+
+  $.extend(Plugin.prototype, {
+
+    init: function () {
+      var self = this;
+
+      $.when(self.options.fetchListings())
+        .done(function (listings) {
+          self.render(listings || []);
+          self.bindEvents();
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+          /* In produzione qui andrà mostrato un messaggio d'errore
+             visibile all'utente, non solo loggato in console — lasciato
+             volutamente semplice in questo POC (stessa scelta fatta nel
+             plugin vetrineSlider per lo stesso motivo). */
+          console.error("toplistCard: errore nel caricamento degli annunci.", textStatus, errorThrown);
+        });
+    },
+
+    /* Costruisce e inserisce le card. Richiamabile anche da fuori (es.
+       $(el).toplistCard("refresh")) per ricaricare la lista con dati
+       aggiornati senza distruggere e ricreare l'istanza. */
+    render: function (listings) {
+      var self = this;
+      self.listings = listings;
+
+      var htmlParts = [];
+      $.each(listings, function (index, listing) {
+        htmlParts.push(buildCardHtml(listing));
+      });
+      self.$root.html(htmlParts.join(""));
+    },
+
+    /* Ricarica la lista dall'inizio (nuova chiamata a fetchListings) —
+       utile per il senior se in futuro serve un filtro/categoria che
+       cambia dinamicamente senza reinizializzare tutto il plugin. */
+    refresh: function () {
+      var self = this;
+      $.when(self.options.fetchListings())
+        .done(function (listings) {
+          self.render(listings || []);
+        })
+        .fail(function (jqXHR, textStatus, errorThrown) {
+          console.error("toplistCard: errore nel ricaricamento degli annunci.", textStatus, errorThrown);
+        });
+    },
+
+    /* --------------------------------------------------------------------
+       CAROSELLO FOTO
+       Per questo POC il carosello cambia solo il NUMERO nel contatore
+       ("1/5" -> "2/5" ecc.): non avendo foto reali, non c'è nulla da far
+       scorrere visivamente (il placeholder resta lo stesso), ma la logica
+       di avanzamento/indietro/clamp ai bordi è quella vera, pronta per
+       quando ci saranno gli URL delle foto reali (vedi README).
+       -------------------------------------------------------------------- */
+    bindEvents: function () {
+      var self = this;
+      var ns = "." + self.instanceId;
+
+      self.$root.on("click" + ns, ".toplist-card__carousel-arrow", function () {
+        var $arrow = $(this);
+        var $media = $arrow.closest(".toplist-card__media");
+        var $counter = $media.find(".toplist-card__photo-counter");
+
+        var parts = $counter.text().split("/");
+        var current = parseInt(parts[0], 10);
+        var total = parseInt(parts[1], 10);
+
+        if ($arrow.hasClass("toplist-card__carousel-arrow--next")) {
+          current = Math.min(total, current + 1);
+        } else {
+          current = Math.max(1, current - 1);
+        }
+
+        $counter.text(current + "/" + total);
+      });
+
+      /* Collegamento contatori → modali. Un solo listener delegato sul
+         contenitore (invece di uno per bottone): funziona anche per le
+         card aggiunte dopo il render iniziale (es. da refresh()), e sono
+         5 x N_ANNUNCI bottoni in meno da agganciare uno per uno. Il tipo
+         di modale da aprire è letto direttamente dall'attributo
+         "data-stat-type" scritto in buildCardHtml.
+
+         IMPORTANTE per l'integrazione: passiamo anche il "listingId"
+         dell'annuncio (letto da "data-listing-id" sulla card contenitore)
+         a StatDetailModal.open(). Senza, la modale non saprebbe DI QUALE
+         annuncio mostrare Follower/Reazioni/ecc. — vedi stat-detail-modal.js
+         e il README ("Come i dati arrivano a ogni modale") per il
+         contratto completo. */
+      self.$root.on("click" + ns, ".toplist-card__stat", function () {
+        var type = $(this).data("stat-type");
+        var listingId = $(this).closest(".toplist-card").data("listing-id");
+        window.StatDetailModal.open(type, listingId);
+      });
+
+      /* Toggle cuoricino preferiti: vuoto (outline) di default, pieno
+         rosa quando selezionato (classe "is-active", colorata via CSS).
+         NOTA: stato SOLO visivo/locale al browser (non persiste al
+         reload, non chiama nessun endpoint) — la vera persistenza del
+         "preferito" è lato Laravel, fuori scope per questo POC. Vedi
+         README per la nota di integrazione. */
+      self.$root.on("click" + ns, ".toplist-card__favorite", function () {
+        var $button = $(this);
+        var isActive = $button.hasClass("is-active");
+
+        $button.toggleClass("is-active", !isActive);
+        $button.attr("aria-pressed", String(!isActive));
+        $button.html(isActive ? ICON_HEART_OUTLINE : ICON_HEART_SOLID);
+      });
+    },
+
+    /* --------------------------------------------------------------------
+       DISTRUZIONE DELL'ISTANZA
+       Toglie SOLO gli eventi/i dati di QUESTA istanza (grazie al
+       namespace per-istanza) — sicuro da chiamare anche con più liste
+       toplistCard attive sulla stessa pagina.
+       -------------------------------------------------------------------- */
+    destroy: function () {
+      var self = this;
+      var ns = "." + self.instanceId;
+
+      self.$root.off(ns);
+      self.$root.empty();
+
+      $.removeData(self.element, PLUGIN_NAME);
+    }
+  });
+
+  /* --------------------------------------------------------------------
+     7) DEFINIZIONE PLUGIN JQUERY — $.fn.toplistCard
+     Stesso pattern del plugin vetrineSlider (vedi il suo README per i
+     dettagli): prima chiamata su un elemento = crea l'istanza (options è
+     un oggetto); chiamate successive con una stringa = invocano il
+     metodo pubblico corrispondente. Esempi:
+
+         $("#toplistList").toplistCard({ fetchListings: fetchListings });
+         $("#toplistList").toplistCard("refresh");
+         $("#toplistList").toplistCard("destroy");
+     -------------------------------------------------------------------- */
+  $.fn[PLUGIN_NAME] = function (options) {
+    var args = Array.prototype.slice.call(arguments, 1);
+
+    return this.each(function () {
+      var instance = $.data(this, PLUGIN_NAME);
+
+      if (!instance) {
+        if (typeof options === "object" || !options) {
+          $.data(this, PLUGIN_NAME, new Plugin(this, options));
+        } else {
+          $.error("toplistCard non è ancora stato inizializzato su questo elemento.");
+        }
+      } else if (typeof options === "string" && options.charAt(0) !== "_" && typeof instance[options] === "function") {
+        instance[options].apply(instance, args);
       } else {
-        current = Math.max(1, current - 1);
+        $.error("Il metodo '" + options + "' non esiste nel plugin " + PLUGIN_NAME + ".");
       }
-
-      $counter.text(current + "/" + total);
     });
-  }
+  };
 
   /* --------------------------------------------------------------------
-     6) COLLEGAMENTO CONTATORI → MODALI
-     Un solo listener delegato sul contenitore (invece di uno per bottone):
-     funziona anche per le card aggiunte dopo il render iniziale, e sono
-     5 x N_ANNUNCI bottoni in meno da agganciare uno per uno. Il tipo di
-     modale da aprire è letto direttamente dall'attributo
-     "data-stat-type" scritto in buildCardHtml (punto 4).
-
-     IMPORTANTE per l'integrazione: passiamo anche il "listingId"
-     dell'annuncio (letto da "data-listing-id" sulla card contenitore,
-     vedi buildCardHtml) a StatDetailModal.open(). Senza, la modale non
-     saprebbe DI QUALE annuncio mostrare Follower/Reazioni/ecc. — è
-     esattamente il pezzo che serve al senior per collegare i dati reali,
-     vedi stat-detail-modal.js e il README ("Come i dati arrivano a ogni
-     modale") per il contratto completo. */
-  function bindStatEvents($list) {
-    $list.on("click", ".toplist-card__stat", function () {
-      var type = $(this).data("stat-type");
-      var listingId = $(this).closest(".toplist-card").data("listing-id");
-      window.StatDetailModal.open(type, listingId);
-    });
-  }
-
-  /* --------------------------------------------------------------------
-     6bis) TOGGLE CUORICINO PREFERITI
-     Vuoto (outline) di default, pieno rosa (#FFADE2) quando selezionato:
-     un semplice click che alterna icona + classe "is-active" (il colore
-     rosa lo applica il CSS in base a quella classe, qui scambiamo solo
-     l'SVG outline<->solid e l'attributo aria-pressed per l'accessibilità).
-
-     NOTA: questo è uno stato SOLO visivo/locale al browser (non persiste
-     al reload, non chiama nessun endpoint) — la vera persistenza del
-     "preferito" (salvare la scelta per l'utente loggato) è lato Laravel,
-     fuori scope per questo POC. Vedi README per la nota di integrazione. */
-  function bindFavoriteEvents($list) {
-    $list.on("click", ".toplist-card__favorite", function () {
-      var $button = $(this);
-      var isActive = $button.hasClass("is-active");
-
-      $button.toggleClass("is-active", !isActive);
-      $button.attr("aria-pressed", String(!isActive));
-      $button.html(isActive ? ICON_HEART_OUTLINE : ICON_HEART_SOLID);
-    });
-  }
-
-  /* --------------------------------------------------------------------
-     7) INIZIALIZZAZIONE
+     8) INIZIALIZZAZIONE AL CARICAMENTO DELLA PAGINA
      -------------------------------------------------------------------- */
   $(function () {
-    var $list = $("#toplistList");
-
-    /* Passiamo SEMPRE da fetchListings(), mai da MOCK_LISTINGS
-       direttamente (vedi punto 2): è l'unico punto che il senior deve
-       toccare per collegare i dati reali. */
-    var listings = fetchListings();
-
-    var htmlParts = [];
-    $.each(listings, function (index, listing) {
-      htmlParts.push(buildCardHtml(listing));
+    $("#toplistList").toplistCard({
+      fetchListings: fetchListings
     });
-    $list.html(htmlParts.join(""));
-
-    bindCarouselEvents($list);
-    bindFavoriteEvents($list);
-    bindStatEvents($list);
   });
 
 })(jQuery);

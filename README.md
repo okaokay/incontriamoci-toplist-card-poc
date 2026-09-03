@@ -333,6 +333,52 @@ nessun'altra parte del file legge l'array finto direttamente.
   pagina. Aggiunto dopo la prima versione della card perché il node Figma
   non lo includeva nell'header (vedi commit precedente).
 
+## Componente riscritto come plugin jQuery ($.fn.toplistCard)
+
+Su richiesta del senior, stesso trattamento già fatto per lo slider
+vetrine (vedi il README di quel componente per il file di riferimento
+fornito dal senior stesso e i 3 problemi corretti in review): il
+componente è ora un vero plugin jQuery, per poter montare più liste
+TopList sulla stessa pagina — es. "TopList Roma" e "TopList Milano" in
+due sezioni diverse — ciascuna con la propria sorgente dati.
+
+```js
+// Inizializzazione
+$("#toplistList").toplistCard({
+  fetchListings: fetchListings // funzione () => Array<listing> — o una Promise/jqXHR
+});
+
+// Ricarica la lista con dati aggiornati (es. cambio filtro/categoria)
+$("#toplistList").toplistCard("refresh");
+
+// Distruzione (rimuove le card e gli event handler di questa istanza)
+$("#toplistList").toplistCard("destroy");
+```
+
+**Più istanze sulla stessa pagina**: ogni istanza ha un id interno
+univoco (non si affida all'attributo `id` del DOM, che potrebbe mancare
+se il plugin è inizializzato su una `class` condivisa — lo scenario
+tipico per cui serve un plugin) usato per namespacizzare i suoi eventi:
+`destroy()` su un'istanza non tocca le altre. Testato creando una seconda
+lista senza id univoco e verificando che continui a funzionare dopo aver
+distrutto la prima.
+
+**Bug parallelo trovato e corretto durante l'adattamento**: i pulsanti
+Chiama/WhatsApp nel footer non avevano MAI avuto un vero collegamento
+(nessun `href`, nessun handler — restavano semplici `<button>` senza
+azione). Stesso fix già applicato allo slider vetrine: ora sono
+`<a href="tel:...">`/`<a href="https://wa.me/...">` reali, con i campi
+`phone`/`whatsapp` aggiunti ai dati finti (vedi schema dati sopra).
+
+**`stat-detail-modal.js` reso più robusto**: prima richiedeva un
+`<div id="statDetailModalRoot"></div>` scritto a mano in ogni pagina che
+usa questo componente. Se in futuro più componenti che condividono questo
+file (card TopList e altri) finissero sulla STESSA pagina reale, avere
+quell'id in più template Blade avrebbe prodotto id duplicati nell'HTML
+finale (non valido). Ora il file crea da sé il contenitore alla prima
+apertura di una modale (e lo riusa per le successive) — non richiede più
+nessun markup preesistente, ed è stato rimosso da `index.html`.
+
 ## Note per l'integrazione futura in Laravel
 
 - Il markup di `index.html` dentro `#toplistList` può diventare un Blade

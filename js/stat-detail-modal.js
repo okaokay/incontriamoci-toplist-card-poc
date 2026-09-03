@@ -273,7 +273,22 @@
         "</div>" +
       "</div>";
 
+    /* Il contenitore della modale viene creato QUI se non esiste già,
+       invece di richiederlo scritto a mano nell'HTML di ogni pagina
+       (com'era prima: <div id="statDetailModalRoot"></div> in index.html).
+       Motivo: se in futuro più componenti che usano questo stesso file
+       (card TopList, e potenzialmente altri) finiscono sulla STESSA
+       pagina reale, avere l'id scritto in ciascun template Blade avrebbe
+       prodotto id duplicati nell'HTML finale — non valido, e con
+       comportamento imprevedibile su quale dei due nodi jQuery
+       effettivamente aggiorna. Creandolo da JS al primo utilizzo (e
+       riusando lo stesso se già presente) il problema sparisce: questo
+       file diventa autosufficiente, non richiede più nessun markup
+       preesistente nella pagina che lo include. */
     var $root = $("#statDetailModalRoot");
+    if (!$root.length) {
+      $root = $('<div id="statDetailModalRoot"></div>').appendTo("body");
+    }
     $root.html(modalHtml);
 
     /* Blocchiamo lo scroll della pagina sotto mentre la modale è aperta

@@ -437,6 +437,10 @@
   font-weight: 400;
   color: var(--toplist-text);
   cursor: pointer;
+  /* Ora sono <a href="tel:...">/<a href="https://wa.me/...">, non più
+     <button> senz'azione: senza questa riga il browser sottolineerebbe
+     l'etichetta testuale per default (comportamento normale dei link). */
+  text-decoration: none;
 }
 
 /* Pulsante Chiama: stesso trattamento "chip rosa" di nome inserzionista e

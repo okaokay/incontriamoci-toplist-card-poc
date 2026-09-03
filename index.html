@@ -59,13 +59,14 @@
   </div>
 
   <!--
-    Contenitore delle modali di dettaglio: rimane VUOTO nell'HTML statico,
-    stat-detail-modal.js ci inietta (e rimuove) la modale corrente quando
-    l'utente clicca su uno dei 5 contatori nel footer di una card. Un solo
-    contenitore condiviso, riusato per tutte e 5 le modali: non ce n'è
-    bisogno di 5 copie nel markup.
+    NOTA: qui non c'è più nessun contenitore per le modali di dettaglio
+    ("statDetailModalRoot") — stat-detail-modal.js lo crea da solo alla
+    prima apertura di una modale (e lo riusa per tutte e 5), invece di
+    richiederlo scritto a mano in ogni pagina che include questo
+    componente. Evita id duplicati se in futuro più componenti che usano
+    lo stesso file finiscono sulla stessa pagina reale — vedi commento in
+    stat-detail-modal.js per il dettaglio.
   -->
-  <div id="statDetailModalRoot"></div>
 
   <!--
     Script JS in fondo al body. ORDINE IMPORTANTE: jQuery prima di tutto,
