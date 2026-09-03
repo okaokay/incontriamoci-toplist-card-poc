@@ -6,14 +6,9 @@
    pulsanti Chiama/WhatsApp.
 
    File autonomo, dipende solo da jQuery + StatDetailModal (vedi
-   stat-detail-modal.js, caricato prima di questo in index.html).
-
-   Riscritto come plugin jQuery (stesso pattern $.fn dello slider vetrine,
-   vedi il README di quel componente per il file di riferimento fornito
-   dal senior) così è possibile montare più liste TopList sulla stessa
-   pagina, ciascuna con la propria sorgente dati (es. "TopList Roma" e
-   "TopList Milano" in due sezioni diverse), invece che un unico
-   "#toplistList" fisso con i dati finti incollati nel file.
+   stat-detail-modal.js, caricato prima di questo in index.html). Stesso
+   pattern $.fn dello slider vetrine: supporta più liste TopList sulla
+   stessa pagina, ciascuna con la propria sorgente dati.
    ============================================================================ */
 
 (function ($) {
@@ -366,13 +361,9 @@
             "</button>" +
           "</div>" +
           '<div class="toplist-card__contact-actions">' +
-            /* Link reali (href), non <button> senza azione: prima questi
-               due pulsanti non facevano NULLA al click (nessun href,
-               nessun handler) — gap notato in review mentre si applicava
-               qui lo stesso fix già fatto per lo slider vetrine (link
-               "tel:"/wa.me invece di generici pulsanti). Il numero per
-               wa.me deve essere SOLO cifre (formato internazionale senza
-               "+", vedi campo "whatsapp" nei dati finti sopra). */
+            /* Link reali (href), non <button>: il numero per wa.me deve
+               essere SOLO cifre (formato internazionale senza "+", vedi
+               campo "whatsapp" nei dati finti sopra). */
             '<a href="tel:' + listing.phone + '" class="toplist-card__contact-button toplist-card__contact-button--call">' + ICON_CALL + "<span>Chiama</span></a>" +
             '<a href="https://wa.me/' + listing.whatsapp + '" target="_blank" rel="noopener" class="toplist-card__contact-button toplist-card__contact-button--whatsapp">' + ICON_WHATSAPP + "<span>WhatsApp</span></a>" +
           "</div>" +
@@ -409,10 +400,9 @@
     }
 
     /* Id interno univoco per questa istanza, usato per namespacizzare
-       tutti gli eventi delegati — stessa soluzione del plugin
-       vetrineSlider (vedi il suo README per il dettaglio del problema
-       che risolve: destroy() sicuro anche con più liste TopList sulla
-       stessa pagina, montate su una classe invece che su id univoci). */
+       tutti gli eventi delegati (stessa soluzione del plugin
+       vetrineSlider): destroy() sicuro anche con più liste TopList sulla
+       stessa pagina. */
     self.instanceId = PLUGIN_NAME + "-" + (++instanceCounter);
 
     self.init();
