@@ -100,10 +100,10 @@ la prima versione**, segnalato dal cliente come dato mancante: il node
 Figma 409:4482 non lo includeva nell'header, solo un placeholder di titolo
 nel corpo; qui è il primo elemento in alto a sinistra, prima del badge
 NEW), `is_new`, `age`, `video_count`, `photo_count`, `price_tier`
-(`"€"`/`"€€"`/`"€€€"`), `title`, `description`, `photos[]` (qui solo un
-conteggio per il contatore del carosello; in produzione sarà l'array reale
-di URL foto — la prima è quella scelta come anteprima, sezione 6.3 della
-doc), `stats` (`followers_count`, `reactions_count`, `saved_count`,
+(`"€"`/`"€€"`/`"€€€"`), `title`, `description`, `photos[]` (array di
+`{id, url}` — "url" alimenta il carosello a lazy load, vedi sezione
+dedicata più sotto; la prima è quella scelta come anteprima, sezione 6.3
+della doc), `stats` (`followers_count`, `reactions_count`, `saved_count`,
 `reviews_count`, `donations_count`).
 
 **Flag dal pannello opzioni "In risalto" — FUORI SCOPE qui, solo lettura:**
@@ -567,3 +567,42 @@ lasciando solo l'etichetta testuale. Il node Figma (`596:12553`) marca
 esplicitamente l'icona come "shrink-0" (non ridimensionabile): aggiunta
 la stessa regola (`.toplist-card-mobile__action svg { flex-shrink: 0; }`),
 ora le 3 icone restano sempre visibili alla loro dimensione piena (16px).
+
+## Carosello foto — lazy load (richiesta del senior)
+
+Il senior ha chiesto un plugin per il caricamento delle immagini del
+carosello TopList: il problema reale è la **performance con più annunci
+in pagina**, ognuno con la propria galleria (anche 15-20 foto) — scaricarle
+tutte al render sarebbe lento e sprecherebbe banda per foto che l'utente
+magari non vede mai (tipo quello che in giro si chiama "lazy load").
+
+Implementato **dentro `toplist-card.js`** (non come plugin `$.fn`
+separato: qui la logica riguarda solo come questo componente carica le
+sue immagini, non è un carosello generico riusabile da altri componenti):
+
+- **Solo 2 foto per volta in memoria**: quella mostrata ("corrente") e la
+  successiva, precaricata in background — le altre restano pigre finché
+  l'utente non ci arriva navigando una alla volta (frecce o swipe).
+- **Precaricamento via `Image()` fuori dal DOM**: un trucco standard,
+  assegnare `src` a un oggetto `Image()` mai inserito nella pagina scarica
+  comunque il file e lo mette in cache del browser — quando la foto viene
+  davvero mostrata (swap del `src` sull'`<img>` reale) è già pronta,
+  nessuna attesa percepita.
+- **`loading="lazy"` nativo** sull'`<img>` di ogni card: anche la
+  *prima* foto (quella già nell'HTML al render) resta in coda al
+  browser finché la card non è vicina allo schermo — utile con una
+  lista TopList lunga, dove le card più in basso non vengono nemmeno
+  scaricate finché l'utente non scorre fin lì.
+- **Stessa logica per desktop e mobile**: `stepCarouselCounter()` (la
+  funzione già usata da click-frecce e swipe) ora, oltre ad aggiornare il
+  contatore "N/tot", aggiorna anche il `src` dell'`<img>` e precarica la
+  foto successiva — nessuna duplicazione tra i due template.
+
+**Dati finti**: `MOCK_LISTINGS` ora usa `buildPlaceholderPhotos()` per
+generare un'immagine data-URI diversa per ogni foto (colore + numero,
+es. "Foto 3"), invece di oggetti vuoti `{id}` — serve a verificare a
+occhio che il lazy load carichi davvero la foto giusta al momento giusto,
+restando 100% offline (nessun CDN esterno tipo picsum.photos, coerente
+col vincolo di progetto). In produzione `photos[].url` sarà il vero URL
+della foto caricata dall'inserzionista — nessun'altra modifica richiesta,
+il meccanismo di lazy load funziona con qualunque URL reale.

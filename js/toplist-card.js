@@ -190,10 +190,17 @@
        - title         → campo "titolo", Step 1 "Info Base" (sezione 2.1)
        - description   → campo "descrizione", Step 1 "Info Base" (sezione 2.1)
        - photos[]      → galleria caricata nello Step 2 "Media & Tag"
-                          (dropzone immagini, doc sezione 2.2) — in
-                          produzione ogni elemento avrà almeno {id, url},
-                          ordinate con la prima = quella scelta come
-                          preview_media_id (doc, sezione 6.3).
+                          (dropzone immagini, doc sezione 2.2), ogni
+                          elemento {id, url} — "url" è il campo che il
+                          carosello scarica pigramente (lazy load, vedi
+                          "CAROSELLO FOTO — LAZY LOAD" più sotto): solo la
+                          foto corrente + la successiva restano in
+                          memoria, MAI tutta la galleria in una volta,
+                          su richiesta esplicita del senior (con tanti
+                          annunci in pagina, ognuno con la sua galleria,
+                          scaricarle tutte subito appesantirebbe troppo il
+                          caricamento). Ordinate con la prima = quella
+                          scelta come preview_media_id (doc, sezione 6.3).
        - stats         → COUNT delle relazioni listing→followers/reactions/
                           savedBy/reviews/donations (stesse relazioni già
                           documentate per le modali, vedi stat-detail-modal.js)
@@ -221,14 +228,30 @@
     return "€";
   }
 
-  /* Placeholder per l'array foto: in questo POC bastano oggetti minimi
-     con un id, non avendo foto reali da mostrare (il carosello aggiorna
-     solo il contatore "1/N" — vedi bindCarouselEvents). In produzione
-     ogni oggetto avrà anche "url". */
+  /* SVG placeholder codificato come data-URI (stesso trucco già usato nel
+     componente slider vetrine, buildFakeThumbnailDataUri): ogni foto ha un
+     colore/numero diverso SOLO per poter verificare a occhio che il lazy
+     load carica davvero l'immagine giusta al momento giusto (vedi
+     "CAROSELLO FOTO — LAZY LOAD" più sotto), restando 100% offline (nessun
+     CDN esterno tipo picsum.photos). In produzione "url" sarà il vero URL
+     della foto caricata dall'inserzionista. */
+  var PLACEHOLDER_PHOTO_COLORS = ["#d7d3f7", "#f7d3e3", "#d3f7e0", "#f7ecd3", "#d3e8f7"];
+  function buildPlaceholderPhotoUrl(index) {
+    var color = PLACEHOLDER_PHOTO_COLORS[(index - 1) % PLACEHOLDER_PHOTO_COLORS.length];
+    var svg =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500">' +
+      '<rect width="400" height="500" fill="' + color + '"/>' +
+      '<text x="200" y="260" font-family="sans-serif" font-size="40" fill="#333" text-anchor="middle">Foto ' + index + "</text>" +
+      "</svg>";
+    return "data:image/svg+xml," + encodeURIComponent(svg);
+  }
+
+  /* Array foto della galleria: "url" è il campo che il lazy load usa per
+     scaricare l'immagine (vedi "CAROSELLO FOTO — LAZY LOAD" più sotto). */
   function buildPlaceholderPhotos(count) {
     var photos = [];
     for (var i = 1; i <= count; i++) {
-      photos.push({ id: "photo-" + i });
+      photos.push({ id: "photo-" + i, url: buildPlaceholderPhotoUrl(i) });
     }
     return photos;
   }
@@ -344,6 +367,24 @@
     return html;
   }
 
+  /* Primo elemento della galleria (foto in indice 0), condiviso da
+     entrambi i template — vedi "CAROSELLO FOTO — LAZY LOAD" più sotto per
+     come vengono caricate le foto successive. Solo la PRIMA foto entra
+     nell'HTML al render: le altre non vengono scaricate finché l'utente
+     non naviga il carosello (o finché non viene precaricata la
+     successiva, vedi preloadNextPhoto). "loading=lazy" è un secondo
+     livello di risparmio, nativo del browser: anche questa prima foto
+     resta in coda finché la card non è vicina allo schermo (utile con
+     tante card TopList in una pagina lunga). Se l'annuncio non ha ancora
+     foto (array vuoto/assente — difensivo, non dovrebbe succedere in
+     produzione), resta il markup di fallback passato dal chiamante. */
+  function buildGalleryPhotoHtml(listing, imgClassName, fallbackHtml) {
+    if (listing.photos && listing.photos.length && listing.photos[0].url) {
+      return '<img class="' + imgClassName + '" src="' + listing.photos[0].url + '" loading="lazy" alt="">';
+    }
+    return fallbackHtml || "";
+  }
+
   /* --------------------------------------------------------------------
      4) HTML DI UNA SINGOLA CARD
      Il layout mobile (Figma node 333:2882 senza Telegram / 596:12483 con
@@ -418,7 +459,7 @@
 
         '<div class="toplist-card__content">' +
           '<div class="toplist-card__media">' +
-            '<div class="toplist-card__photo-placeholder"></div>' +
+            buildGalleryPhotoHtml(listing, "toplist-card__photo", '<div class="toplist-card__photo-placeholder"></div>') +
             '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--prev" aria-label="Foto precedente">' + ICON_ARROW_LEFT + "</button>" +
             '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--next" aria-label="Foto successiva">' + ICON_ARROW_RIGHT + "</button>" +
             '<span class="toplist-card__photo-counter">1/' + listing.photos.length + "</span>" +
@@ -574,7 +615,9 @@
            finirebbero annidati dentro un <a> (HTML non valido, click
            inaffidabile). */
         '<div class="toplist-card__media toplist-card-mobile__media">' +
-          '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__gallery">' + ICON_IMAGE_PLACEHOLDER + "</a>" +
+          '<a href="' + (listing.profileUrl || "#") + '" class="toplist-card-mobile__gallery">' +
+            buildGalleryPhotoHtml(listing, "toplist-card-mobile__photo", ICON_IMAGE_PLACEHOLDER) +
+          "</a>" +
           '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--prev" aria-label="Foto precedente">' + ICON_ARROW_LEFT + "</button>" +
           '<button type="button" class="toplist-card__carousel-arrow toplist-card__carousel-arrow--next" aria-label="Foto successiva">' + ICON_ARROW_RIGHT + "</button>" +
           '<span class="toplist-card__photo-counter">1/' + listing.photos.length + "</span>" +
@@ -632,12 +675,40 @@
     );
   }
 
+  /* --------------------------------------------------------------------
+     CAROSELLO FOTO — LAZY LOAD
+     Su richiesta esplicita del senior: con più annunci TopList in pagina,
+     ognuno con la propria galleria (anche 15-20 foto), scaricarle TUTTE
+     al render sarebbe lento e sprecherebbe banda per foto che l'utente
+     magari non vede mai. Qui restano in memoria SOLO due foto per volta:
+     quella mostrata ("corrente") e quella subito dopo ("successiva"),
+     precaricata in background così il prossimo click/swipe è istantaneo
+     — le altre non vengono scaricate finché l'utente non ci arriva
+     navigando una alla volta.
+
+     "preloadImage()" è il trucco standard per scaricare un'immagine SENZA
+     inserirla nel DOM: un oggetto Image() scarica il file appena gli si
+     assegna "src", anche se non è mai attaccato alla pagina — il browser
+     lo mette comunque in cache HTTP, quindi quando la foto viene
+     davvero mostrata (swap del "src" sull'<img> reale) è già pronta,
+     nessuna attesa percepita dall'utente. */
+  function preloadImage(url) {
+    if (!url) {
+      return;
+    }
+    var img = new Image();
+    img.src = url;
+  }
+
   /* Avanza/arretra il contatore "N/tot" di un carosello foto di una
-     posizione, con clamp ai bordi (non supera mai 1 o il totale).
-     Condivisa da bindEvents() tra il click sulle frecce e lo swipe
-     touch/mouse sulla galleria mobile: stessa identica logica, cambia
-     solo COSA la richiama. */
-  function stepCarouselCounter($media, direction) {
+     posizione, con clamp ai bordi (non supera mai 1 o il totale), e
+     aggiorna la foto mostrata + precarica quella dopo. Condivisa da
+     bindEvents() tra il click sulle frecce e lo swipe touch/mouse sulla
+     galleria mobile: stessa identica logica, cambia solo COSA la
+     richiama. "listing" serve per leggere l'array "photos" reale
+     dell'annuncio — vedi findListingById più sotto per come viene
+     recuperato a partire dalla card cliccata. */
+  function stepCarouselCounter($media, listing, direction) {
     var $counter = $media.find(".toplist-card__photo-counter");
     var parts = $counter.text().split("/");
     var current = parseInt(parts[0], 10);
@@ -650,6 +721,32 @@
     }
 
     $counter.text(current + "/" + total);
+
+    if (!listing || !listing.photos) {
+      return;
+    }
+    var currentPhoto = listing.photos[current - 1]; // "current" è 1-based, l'array è 0-based
+    if (currentPhoto) {
+      $media.find(".toplist-card__photo, .toplist-card-mobile__photo").attr("src", currentPhoto.url);
+    }
+    var nextPhoto = listing.photos[current]; // indice 0-based della foto SUBITO DOPO quella corrente
+    if (nextPhoto) {
+      preloadImage(nextPhoto.url);
+    }
+  }
+
+  /* Recupera l'oggetto "listing" completo (con l'array "photos") a
+     partire dall'id letto da "data-listing-id" sulla card cliccata —
+     bindEvents() ha solo l'elemento DOM, non i dati originali, quindi
+     serve un punto per ritrovarli in "self.listings" (popolato da
+     render(), vedi sotto). */
+  function findListingById(listings, id) {
+    for (var i = 0; i < listings.length; i++) {
+      if (listings[i].id === id) {
+        return listings[i];
+      }
+    }
+    return null;
   }
 
   /* --------------------------------------------------------------------
@@ -718,6 +815,16 @@
         htmlParts.push(buildCardHtml(listing));
       });
       self.$root.html(htmlParts.join(""));
+
+      /* La prima foto di ogni galleria è già nell'HTML appena inserito
+         (vedi buildGalleryPhotoHtml); qui precarichiamo SOLO la seconda,
+         così il primo swipe/click sulle frecce è istantaneo — le foto
+         successive restano pigre (vedi stepCarouselCounter). */
+      $.each(listings, function (index, listing) {
+        if (listing.photos && listing.photos[1]) {
+          preloadImage(listing.photos[1].url);
+        }
+      });
     },
 
     /* Ricarica la lista dall'inizio (nuova chiamata a fetchListings) —
@@ -755,7 +862,9 @@
       self.$root.on("click" + ns, ".toplist-card__carousel-arrow", function () {
         var $arrow = $(this);
         var $media = $arrow.closest(".toplist-card__media");
-        stepCarouselCounter($media, $arrow.hasClass("toplist-card__carousel-arrow--next") ? "next" : "prev");
+        var listingId = $arrow.closest("[data-listing-id]").data("listing-id");
+        var listing = findListingById(self.listings, listingId);
+        stepCarouselCounter($media, listing, $arrow.hasClass("toplist-card__carousel-arrow--next") ? "next" : "prev");
       });
 
       /* Swipe/trascinamento sulla foto mobile (Pointer Events: un'unica
@@ -798,7 +907,9 @@
           return; // spostamento troppo piccolo: è un tap, non uno swipe
         }
         var $media = $(this).closest(".toplist-card__media");
-        stepCarouselCounter($media, deltaX < 0 ? "next" : "prev");
+        var listingId = $(this).closest("[data-listing-id]").data("listing-id");
+        var listing = findListingById(self.listings, listingId);
+        stepCarouselCounter($media, listing, deltaX < 0 ? "next" : "prev");
       });
 
       /* Il link alla pagina del profilo non deve attivarsi se il click

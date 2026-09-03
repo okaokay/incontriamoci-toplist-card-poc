@@ -302,6 +302,18 @@
     linear-gradient(-45deg, transparent 49.5%, #e4e4e7 49.5%, #e4e4e7 50.5%, transparent 50.5%);
 }
 
+/* Foto vera della galleria (lazy load, vedi "CAROSELLO FOTO — LAZY LOAD"
+   in toplist-card.js): riempie tutto ".toplist-card__media" come faceva
+   il placeholder a "X" che sostituisce, "object-fit:cover" per non
+   deformare foto con proporzioni diverse dal riquadro. */
+.toplist-card__photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .toplist-card__carousel-arrow {
   position: absolute;
   top: 50%;
@@ -653,6 +665,19 @@
      movimento del dito può essere interpretato come uno scroll di pagina
      e "rubare" l'evento prima che il nostro swipe venga riconosciuto. */
   touch-action: pan-y;
+}
+
+/* Foto vera della galleria mobile (lazy load, vedi "CAROSELLO FOTO —
+   LAZY LOAD" in toplist-card.js): riempie ".toplist-card-mobile__gallery",
+   eredita il border-radius del contenitore, "object-fit:cover" per non
+   deformare foto con proporzioni diverse dal riquadro. Quando presente
+   sostituisce ICON_IMAGE_PLACEHOLDER (icona di fallback, mostrata solo
+   se l'annuncio non ha ancora foto). */
+.toplist-card-mobile__photo {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
 }
 
 /* ---- 3.5) Riga badge di stato, sotto la galleria -------------------------
