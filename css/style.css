@@ -537,18 +537,22 @@
   align-items: center;
   gap: 4px;
 }
+/* Colori/forma allineati al badge TOPLIST desktop (".toplist-card__toplist-flag",
+   sezione 2.1, valori esatti dal node Figma 461:3835): chip rosa #fe9bdd,
+   bordo scuro #77767b, angoli squadrati (radius 2px, non una pillola) —
+   su richiesta del cliente, non più lo stile bianco/grigio del mockup
+   mobile statico. */
 .toplist-card-mobile__toplist-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 9999px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+  background: #fe9bdd;
+  border: 1px solid #77767b;
+  border-radius: 2px;
   padding: 3px 9px;
   font-size: 10px;
   font-weight: 700;
-  color: #6b7280;
+  color: #1a1c1c;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -607,11 +611,14 @@
   flex-wrap: wrap;
   width: 100%;
 }
+/* Sfondo nero + testo rosa (#fe9bdd, lo stesso rosa del badge TOPLIST e
+   del resto della palette del componente): colori su richiesta esplicita
+   del cliente, non i grigi del mockup Figma statico. */
 .toplist-card-mobile__price-badge {
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
-  background: #d9d9d9;
+  background: #000;
   border-radius: 9px;
   padding: 3px 10px;
   /* Il node Figma usa "JetBrains Mono": font non garantito sui device dei
@@ -621,7 +628,7 @@
   font-weight: 700;
   font-size: 11px;
   letter-spacing: 0.5px;
-  color: #000;
+  color: #fe9bdd;
   white-space: nowrap;
 }
 

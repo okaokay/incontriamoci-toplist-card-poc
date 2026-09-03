@@ -456,8 +456,14 @@ richiede nessuna modifica), stessi link Chiama/WhatsApp. Cambia la
 disposizione visiva: chip arrotondati al posto della riga con
 separatori, gruppo flottante in alto a sinistra con TOPLIST **e la
 fascia prezzo affiancati** (su richiesta del cliente — sul desktop il
-prezzo resta testo semplice nell'header, qui è un chip vicino a TOPLIST),
-badge di stato (senza il prezzo) in flusso normale tra galleria e titolo
+prezzo resta testo semplice nell'header, qui è un chip vicino a TOPLIST).
+**Colori dei due badge del gruppo flottante, su richiesta del cliente**:
+TOPLIST riusa lo stesso rosa/bordo/angoli squadrati del badge TOPLIST
+desktop (`.toplist-card__toplist-flag`, sfondo `#fe9bdd`, NON il
+bianco/grigio del mockup Figma statico); il badge prezzo ha sfondo nero
+`#000` e testo rosa `#fe9bdd` (stessa tonalità del badge TOPLIST), colori
+scelti dal cliente, non presenti nel mockup Figma (che lo mostrava
+grigio). Badge di stato (senza il prezzo) in flusso normale tra galleria e titolo
 (non più flottanti: si adattano con `flex-wrap` a qualunque larghezza
 invece di uscire dal bordo della card su schermi stretti), galleria a
 riquadro singolo (nessuna freccia: sul mobile la navigazione foto sarà a
