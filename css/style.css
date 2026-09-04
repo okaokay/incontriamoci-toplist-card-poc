@@ -246,7 +246,7 @@
 /* Cuoricino preferiti: vuoto/outline di default, si tinge di rosa già al
    passaggio del mouse (anteprima dell'azione) e diventa rosa pieno quando
    selezionato (classe "is-active", aggiunta/tolta al click in
-   toplist-card.js — vedi bindFavoriteEvents). Il colore #FFADE2 è quello
+   toplist-card.js — vedi bindEvents). Il colore #FFADE2 è quello
    indicato dal cliente. */
 .toplist-card__favorite {
   display: inline-flex;
@@ -267,6 +267,20 @@
 
 .toplist-card__favorite.is-active {
   color: #ffade2;
+}
+
+/* Le DUE icone (contorno/piena) sono ENTRAMBE già nel markup statico
+   (niente più HTML costruito da JS, vedi index.html): qui decidiamo
+   quale mostrare in base alla classe "is-active" del bottone — il
+   plugin si limita a spostare quella classe, non tocca più nessun SVG. */
+.toplist-card__favorite-icon--solid {
+  display: none;
+}
+.toplist-card__favorite.is-active .toplist-card__favorite-icon--outline {
+  display: none;
+}
+.toplist-card__favorite.is-active .toplist-card__favorite-icon--solid {
+  display: inline-flex;
 }
 
 /* Piccolo "pop" quando si seleziona, feedback tattile in più (non richiesto
@@ -981,6 +995,17 @@
   overflow-y: auto;
   flex: 1 1 auto;
   min-height: 0;
+}
+
+/* Indicatore "Caricamento…" dell'infinite scroll (vedi loadNextPageIfNearBottom
+   in stat-detail-modal.js): sempre l'ultimo figlio di ".stat-modal__rows",
+   nascosto di default (attributo HTML "hidden"), mostrato solo mentre la
+   pagina successiva sta arrivando. */
+.stat-modal__loading-more {
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--modal-muted);
 }
 
 .stat-modal__row {

@@ -39,12 +39,17 @@ incontriamoci-toplist-card-poc/
 │   └── style.css              → card + modali, commentato riga per riga
 ├── js/
 │   ├── jquery.min.js
-│   ├── stat-detail-modal.js   → componente UNICO condiviso dalle 5 modali (vedi sotto)
-│   └── toplist-card.js        → card TopList: badge, carosello, footer statistiche
+│   ├── stat-detail-modal.js   → componente UNICO condiviso dalle 5 modali, con
+│   │                             infinite scroll (vedi sotto)
+│   └── toplist-card.js        → plugin jQuery leggero: SOLO interattività
+│                                 (carosello, swipe, preferiti, apertura modali) —
+│                                 non genera più HTML, vedi "Contratto HTML per Blade"
 ├── img/icons/                 → SVG esportati da Figma (stella, cuore, video, foto,
 │                                  followers/reactions/saved/reviews/donazioni, call, message)
 │                                  — tenuti come file anche se nel markup sono inline,
 │                                  utili come riferimento/riuso in altri componenti
+├── img/mock/                  → foto finte locali (photo-1.svg…photo-8.svg) usate nei
+│                                  `data-images` delle card di prova, 100% offline
 └── README.md                  → questo file
 ```
 
@@ -63,6 +68,46 @@ incontriamoci-toplist-card-poc/
   overlay, con l'elenco delle interazioni (nome, città, valore/emoji/stelle,
   data), chip "Utenti anonimi N" dove previsto, chiusura con "✕", "✕ Chiudi"
   o click fuori dalla modale (oltre al tasto ESC).
+
+## Card TopList: HTML statico + plugin jQuery leggero (contratto per Blade)
+
+Su richiesta esplicita del cliente, `toplist-card.js` **non genera più
+l'HTML delle card**: prima costruiva ogni card da un array di dati finti
+(`MOCK_LISTINGS`) con template string JS (`buildDesktopCardHtml()`/
+`buildMobileCardHtml()`). Ora il markup è **scritto direttamente in
+`index.html`** (a mano in questo POC, stampato da Blade in produzione) e
+il plugin si limita ad agganciare l'interattività a un markup che esiste
+già nella pagina: carosello foto con lazy load, swipe touch mobile,
+toggle cuoricino preferiti, apertura delle modali statistiche.
+
+**Il contratto HTML** (documentato per esteso in testa a `index.html`,
+sotto "QUESTO È IL CONTRATTO HTML PER BLADE") si riassume così — per
+ogni annuncio, un `.toplist-card-container[data-listing-id]` che
+contiene **due template affiancati** nel DOM (solo uno visibile per
+volta via CSS in base alla larghezza, vedi sezione dedicata più sotto):
+
+- `.toplist-card` (desktop) e `.toplist-card-mobile` (mobile/tablet),
+  entrambi con un elemento `.toplist-card__media` che porta l'attributo
+  `data-images` (JSON array di URL foto — stesso attributo `$el.data(...)`
+  già usato dal plugin `imageCarousel.js` del senior).
+- Bottoni statistica con `data-stat-type="followers|reactions|saved|
+  reviews|donations"` — il plugin legge questo attributo al click, non
+  serve nessuna mappatura JS.
+- Cuoricino preferiti con **entrambe** le icone SVG (contorno + piena)
+  già nel markup: il plugin sposta solo una classe CSS (`is-active`), non
+  costruisce più nessuna icona via JS (vedi CSS dedicato in `style.css`).
+- Badge di stato (ONLINE ORA/DISPONIBILE ORA/RISPONDO SUBITO) e bordo
+  colorato: la logica "se il flag è attivo, stampa il badge/bordo" resta
+  **lato server** (Blade `@if`), non più lato JS — il plugin non li legge
+  né li tocca in nessun modo.
+
+**Perché questo cambio**: il senior deve poter stampare il markup
+direttamente dal template Blade con i dati reali (Eloquent), senza dover
+prima serializzare tutto in un array JS e passarlo a una funzione che
+costruisce l'HTML — un passaggio in più, e un punto in più dove i dati
+potevano disallinearsi dal markup reale della pagina. Il plugin diventa
+così una libreria di **soli comportamenti**, riusabile su qualunque
+markup che rispetti il contratto, a prescindere da come è stato stampato.
 
 ## Il componente modale — un unico file per tutte e 5
 
@@ -84,27 +129,52 @@ Tre "tipi di riga" (`rowType`), scelti in base al tipo di modale:
 - `review` — layout diverso: nome+data in alto, poi stelle, poi testo
   della recensione (Recensioni)
 
-**Nessuna paginazione**: su richiesta esplicita del cliente, le righe si
-caricano tutte in un'unica chiamata quando la modale si apre (l'utente la
-apre volontariamente, non è uno scroll passivo come lo slider vetrine). La
-funzione `fetchStatRows(type)` in cima al file è comunque isolata apposta:
-se in futuro un annuncio molto popolare avesse centinaia di interazioni, si
-potrà introdurre paginazione qui dentro senza toccare la card (sono due
-componenti separati).
+**Infinite scroll**: su richiesta esplicita del cliente, le righe si
+caricano **a pagine**, non tutte insieme — all'apertura la modale carica
+solo la prima pagina (`ITEMS_PER_PAGE = 15` righe), poi ne carica altre
+automaticamente quando l'utente scorre vicino al fondo della lista
+(soglia `SCROLL_LOAD_THRESHOLD_PX = 80`px), finché non ha visto tutte le
+righe disponibili. Stesso principio già usato dallo slider vetrine (batch
+`{total, items}`), qui applicato alle 5 modali:
 
-## Schema dati — cosa la card si aspetta di ricevere
+- `fetchStatRowsPage(type, listingId, offset, limit)` sostituisce il
+  vecchio `fetchStatRows(type)` a caricamento unico: restituisce
+  `{totalItems, anonymousCount, items}` per la pagina richiesta.
+- `calculateTotalPages(totalItems, itemsPerPage)` calcola in automatico
+  quante pagine servono (`Math.ceil(totalItems / itemsPerPage)`) — il
+  chiamante non deve saperlo in anticipo, basta passare il totale e la
+  dimensione pagina.
+- `openModal()` tiene traccia di `currentPage`/`totalPages`; lo scroll si
+  ferma da solo (`currentPage >= totalPages`, nessun'altra richiesta) una
+  volta caricata l'ultima pagina, e un indicatore "Caricamento…" compare
+  solo mentre la pagina successiva sta arrivando.
+- Un flag `isLoadingNextPage` evita richieste doppie se l'utente continua
+  a scorrere mentre una pagina è già in caricamento.
 
-**Campi diretti dell'annuncio:**
-`id`, `name` (nome/nickname pubblico dell'inserzionista — **aggiunto dopo
-la prima versione**, segnalato dal cliente come dato mancante: il node
-Figma 409:4482 non lo includeva nell'header, solo un placeholder di titolo
-nel corpo; qui è il primo elemento in alto a sinistra, prima del badge
-NEW), `is_new`, `age`, `video_count`, `photo_count`, `price_tier`
-(`"€"`/`"€€"`/`"€€€"`), `title`, `description`, `photos[]` (array di
-`{id, url}` — "url" alimenta il carosello a lazy load, vedi sezione
-dedicata più sotto; la prima è quella scelta come anteprima, sezione 6.3
-della doc), `stats` (`followers_count`, `reactions_count`, `saved_count`,
-`reviews_count`, `donations_count`).
+Le nuove righe caricate dallo scroll si aggiungono in fondo alla lista
+esistente (`.before()` sull'indicatore di caricamento, che resta sempre
+l'ultimo figlio) — convivono senza conflitti con le righe aggiunte in
+cima dalle azioni utente (Segui, Recensione, ecc., vedi più sotto).
+
+## Schema dati — cosa Blade deve stampare nella card
+
+Da quando la card è HTML statico (vedi sezione dedicata più sopra), questi
+non sono più "campi passati a una funzione JS" ma **valori che Blade deve
+stampare direttamente nel markup**, nei punti indicati:
+
+`id` (→ `data-listing-id` sul contenitore), `name` (nome/nickname pubblico
+dell'inserzionista — **aggiunto dopo la prima versione**, segnalato dal
+cliente come dato mancante: il node Figma 409:4482 non lo includeva
+nell'header, solo un placeholder di titolo nel corpo; qui è il primo
+elemento in alto a sinistra, prima del badge NEW), `age`, `video_count`,
+`photo_count`, `price_tier` (`"€"`/`"€€"`/`"€€€"`, calcolo lato server —
+vedi sezione dedicata più sotto), `title`, `description`, `photos[].url`
+(→ JSON nell'attributo `data-images`, alimenta il carosello a lazy load,
+vedi sezione dedicata più sotto; il primo elemento è quello scelto come
+anteprima, sezione 6.3 della doc, ed è anche il primo `<img src>` stampato
+nel markup), `stats` (`followers_count`, `reactions_count`, `saved_count`,
+`reviews_count`, `donations_count`, stampati come testo nei contatori del
+footer).
 
 **Flag dal pannello opzioni "In risalto" — FUORI SCOPE qui, solo lettura:**
 `is_toplist`, `is_bordo` + `colore_bordo` (uno tra 9 valori fissi:
@@ -117,9 +187,10 @@ rosa/magenta/rosso/arancione/giallo/verde/blu/viola/nero), `is_disponibile_subit
 > `calcolatore_risalite_prezzi.html` già allegato alla documentazione). Qui
 > la card si limita a **leggerli e renderizzare di conseguenza** badge e
 > bordo — non c'è nessuna interfaccia per modificarli in questo componente.
-> Nei dati finti (`MOCK_LISTINGS` in `toplist-card.js`) sono già presenti
-> con valori di esempio diversi tra i 3 annunci, così la card li mostra
-> correttamente da subito quando il pannello opzioni sarà collegato.
+> Nel markup scritto a mano in `index.html` sono già presenti con valori
+> di esempio diversi tra le 3 card di prova, così si vede subito come si
+> comporta badge/bordo una volta che Blade li stamperà con i dati reali
+> dal pannello opzioni.
 
 ## Colori dei badge di stato — nota importante
 
@@ -155,14 +226,14 @@ annuncio (doc, sezione 2):
 
 - **Badge "NEW"**: rimosso su richiesta esplicita — non serviva. Non fa
   più parte né del markup né dello schema dati.
-- **Fascia prezzo (€/€€/€€€)**: prima era un valore fisso scritto a mano
-  per ciascun annuncio finto; ora è **calcolata** da `costPerHour`, il
-  dato realmente catturato nel form (campo tag "prezzo/ora", Step 2 "Media
-  & Tag" del wizard, doc sezione 2.2) tramite la funzione `getPriceTier()`
-  in `toplist-card.js`. Le soglie usate (`>= 150 → €€€`, `>= 70 → €€`,
-  altrimenti `€`) sono un esempio ragionevole, **non valori di business
-  ufficiali** — vanno confermate con cliente/senior prima di andare in
-  produzione.
+- **Fascia prezzo (€/€€/€€€)**: va **calcolata lato server** da
+  `costPerHour`, il dato realmente catturato nel form (campo tag
+  "prezzo/ora", Step 2 "Media & Tag" del wizard, doc sezione 2.2) — con la
+  card ora HTML statico, questa non è più responsabilità del JS: Blade
+  stampa direttamente il simbolo già calcolato (es. helper/accessor
+  Eloquent). Soglie proposte come esempio ragionevole (`>= 150 → €€€`,
+  `>= 70 → €€`, altrimenti `€`), **non valori di business ufficiali** —
+  vanno confermate con cliente/senior prima di andare in produzione.
 
 ## Nome, Chiama e badge TOPLIST — stile "chip catturato" (valori esatti da Figma)
 
@@ -195,17 +266,17 @@ nome e il costo/ora discussi sopra:
 - `title` e `description` → campi "titolo" e "descrizione", **Step 1 "Info
   Base"** del wizard (doc, sezione 2.1, node Figma `577:7224`).
 - `photos[]` → galleria caricata nello **Step 2 "Media & Tag"** (doc,
-  sezione 2.2, dropzone immagini) — con questa modifica è diventato un
-  VERO array (`buildPlaceholderPhotos()` in `toplist-card.js`), non solo
-  un numero per il contatore del carosello come prima: in produzione ogni
-  elemento avrà almeno `{id, url}`, pronti per essere iniettati al posto
-  dei placeholder. Il primo elemento deve essere quello con
-  `id === preview_media_id` (doc, sezione 6.3, foto scelta come
-  anteprima).
+  sezione 2.2, dropzone immagini): Blade stampa gli URL come JSON
+  nell'attributo `data-images` di `.toplist-card__media` (vedi "Carosello
+  foto — lazy load" più sotto), non più come array JS. Il primo elemento
+  deve essere quello con `id === preview_media_id` (doc, sezione 6.3, foto
+  scelta come anteprima) — è anche il primo `<img src>` già stampato nel
+  markup, per essere visibile senza aspettare JS.
 
-Tutti e tre passano già da `fetchListings()` (vedi sezione dedicata più
-sotto): il senior non deve cercare questi campi altrove nel file, basta
-popolarli lì con i dati reali.
+Tutti e tre sono valori che Blade stampa direttamente nel markup (vedi
+"Card TopList: HTML statico + plugin jQuery leggero" più sopra): il
+senior non deve cercarli in nessuna funzione JS, solo nel template Blade
+che genera la card.
 
 ## Testi footer statistiche — allineati al node Figma 516:9277
 
@@ -251,24 +322,20 @@ in evidenza (colore rosa, grassetto) rispetto al resto della riga.
 
 ## Come i dati arrivano a ogni modale — il pezzo che serve al senior
 
-Fino a questa versione c'era un **buco reale nell'integrazione**: la card
-scrive un `data-listing-id` su ogni riga (`<div class="toplist-card"
-data-listing-id="...">`, vedi `buildCardHtml`), ma quando si cliccava un
-contatore quell'id non veniva letto né passato da nessuna parte — la
-modale non aveva modo di sapere **di quale annuncio** mostrare
-Follower/Reazioni/ecc. In pratica, con più card in pagina, avrebbero
-mostrato tutte gli stessi identici dati finti (cosa che infatti succedeva,
-solo che essendo dati finti uguali per ogni annuncio non si notava).
+La card scrive un `data-listing-id` sul contenitore di ogni annuncio
+(`.toplist-card-container[data-listing-id="..."]`, vedi il contratto HTML
+più sopra), letto e inoltrato alla modale così:
 
-**Sistemato così:**
-
-1. Al click su un contatore (`bindStatEvents` in `toplist-card.js`),
-   leggiamo il `data-listing-id` dalla card più vicina (`.closest(...)`)
-   e lo passiamo a `StatDetailModal.open(type, listingId)`.
-2. `stat-detail-modal.js` inoltra `listingId` a `fetchStatRows(type,
-   listingId)` — oggi lo ignora (i dati finti in `MOCK_STAT_ROWS` sono
-   condivisi da tutti gli annunci, per semplicità del POC), ma **la firma
-   della funzione è già quella corretta**.
+1. Al click su un contatore (in `bindEvents()` di `toplist-card.js`),
+   leggiamo il `data-listing-id` dal contenitore più vicino
+   (`.closest("[data-listing-id]")`) e lo passiamo a
+   `StatDetailModal.open(type, listingId)`.
+2. `stat-detail-modal.js` inoltra `listingId` (insieme a `offset`/`limit`
+   per la paginazione, vedi "Infinite scroll" più sopra) a
+   `fetchStatRowsPage(type, listingId, offset, limit)` — oggi lo ignora (i
+   dati finti generati in cima al file sono condivisi da tutti gli
+   annunci, per semplicità del POC), ma **la firma della funzione è già
+   quella corretta**.
 
 **Cosa deve fare il senior per agganciare i dati veri**, in ordine:
 
@@ -276,16 +343,19 @@ solo che essendo dati finti uguali per ogni annuncio non si notava).
    parametrica per tutte e 5 le modali, es.
 
    ```
-   GET /api/annunci/{listingId}/stats/{tipo}
+   GET /api/annunci/{listingId}/stats/{tipo}?offset=0&limit=15
    ```
 
    dove `{tipo}` è uno tra `followers|reactions|saved|reviews|donations`
    (stessi valori già usati in `data-stat-type` sui bottoni della card, non
-   serve nessuna mappatura aggiuntiva). Risposta attesa, stessa forma dei
-   dati finti attuali:
+   serve nessuna mappatura aggiuntiva), e `offset`/`limit` sono gli stessi
+   parametri già usati da `fetchStatRowsPage()` per l'infinite scroll (vedi
+   sezione dedicata più sopra). Risposta attesa, stessa forma dei dati
+   finti attuali:
 
    ```json
    {
+     "total_items": 38,
      "anonymous_count": 1,
      "rows": [
        { "name": "Chiara", "city": "Firenze", "value": "🖤", "date": "2025-03-19" }
@@ -295,12 +365,15 @@ solo che essendo dati finti uguali per ogni annuncio non si notava).
 
    (`value` e `rating`/`text` cambiano forma a seconda del tipo — vedi
    `buildRowHtml()` in `stat-detail-modal.js` per i 3 formati riga
-   esistenti: `simple`, `value`, `review`.)
-2. Sostituire il corpo di `fetchStatRows(type, listingId)` con una vera
-   chiamata (es. `$.get("/api/annunci/" + listingId + "/stats/" + type)`).
-   Come per lo slider vetrine, l'unico cambiamento strutturale è che
-   diventerà **asincrona** — `openModal()` andrà adattato ad aspettare la
-   Promise prima di costruire l'HTML delle righe.
+   esistenti: `simple`, `value`, `review`. `total_items` è il totale reale
+   lato server, non solo la lunghezza di `rows` — serve al client per
+   calcolare con `calculateTotalPages()` quando fermare lo scroll.)
+2. Sostituire il corpo di `fetchStatRowsPage(type, listingId, offset,
+   limit)` con una vera chiamata (es. `$.get("/api/annunci/" + listingId +
+   "/stats/" + type, { offset: offset, limit: limit })`). Come per lo
+   slider vetrine, l'unico cambiamento strutturale è che diventerà
+   **asincrona** — il codice chiamante usa già `$.when(...)`, quindi non
+   richiede nessuna modifica quando la funzione diventerà una vera Promise.
 3. Le date nei dati finti sono in formato `GG/MM/AAAA` (italiano, pronto
    per essere mostrato così com'è); se il backend restituisce date in
    formato ISO (`AAAA-MM-GG`) va deciso se formattarle lato server o lato
@@ -364,11 +437,11 @@ GET  /api/annunci/{id}/donazioni   POST /api/annunci/{id}/donazioni     { import
 ```
 
 `postStatAction(type, listingId, payload)` in `stat-detail-modal.js` è il
-punto isolato da collegare (stesso pattern già usato per `fetchStatRows`/
-`fetchListings`/`fetchVetrinePage`): oggi ritorna `{ok:true}` sincrono,
-in produzione una vera `$.ajax` — il resto del codice usa già
-`$.when(postStatAction(...))`, quindi non richiede nessuna modifica
-quando diventerà una vera Promise.
+punto isolato da collegare (stesso pattern già usato per
+`fetchStatRowsPage`/`fetchVetrinePage` nello slider vetrine): oggi ritorna
+`{ok:true}` sincrono, in produzione una vera `$.ajax` — il resto del
+codice usa già `$.when(postStatAction(...))`, quindi non richiede nessuna
+modifica quando diventerà una vera Promise.
 
 **Aggancio pronto per il futuro**: ogni azione riuscita emette anche un
 evento `$(document).trigger("incontriamoci:statAction", [...])` con
@@ -388,46 +461,47 @@ standard del breakpoint "tablet" di Bootstrap 3 (dove inizia
 
 ## Come i dati degli annunci arrivano alla card — il punto di aggancio
 
-Stessa logica già usata per lo slider vetrine e per le modali di questo
-componente (vedi sopra): **un'unica funzione isolata** produce i dati, e
-nessun'altra parte del file legge l'array finto direttamente.
+Da quando la card è HTML statico (vedi "Card TopList: HTML statico +
+plugin jQuery leggero" più sopra), il punto di aggancio non è più una
+funzione JS ma il **template Blade** che stampa il markup:
 
-- `fetchListings()` in `toplist-card.js` è l'UNICO punto che il senior deve
-  toccare per collegare gli annunci reali: oggi restituisce
-  `MOCK_LISTINGS`, in produzione diventerà una vera chiamata (es.
-  `$.get("/api/annunci", { categoria: "roma" })`).
-- Subito sopra `MOCK_LISTINGS` c'è la mappatura **campo per campo** verso
-  la fonte dati Eloquent più plausibile (es. `name` → `users.display_name`,
-  `stats.followers` → count della relazione `listing→followers`, ecc.) —
-  utile come punto di partenza per scrivere la query reale, anche se i nomi
-  esatti delle colonne/relazioni andranno confermati con chi conosce lo
-  schema reale del database.
+- Il markup di `#toplistList` in `index.html` diventerà un Blade
+  component/loop (`@foreach ($annunci as $annuncio) <x-toplist-card
+  :annuncio="$annuncio" /> @endforeach`), con i valori reali al posto di
+  quelli scritti a mano in questo POC.
+- La mappatura **campo per campo** verso la fonte dati Eloquent più
+  plausibile (es. `name` → `users.display_name`, `stats.followers` →
+  count della relazione `listing→followers`, ecc.) è quella già discussa
+  nella sezione "Schema dati" più sopra — utile come punto di partenza per
+  scrivere la query reale, anche se i nomi esatti delle colonne/relazioni
+  andranno confermati con chi conosce lo schema reale del database.
 - **Il nome dell'inserzionista (`name`)** in particolare: è un dato
   "catturato" (inserito dall'utente in fase di registrazione o
   pubblicazione annuncio), non testo statico — va quindi risolto con una
   query reale come tutti gli altri campi, non semplicemente scritto in
   pagina. Aggiunto dopo la prima versione della card perché il node Figma
   non lo includeva nell'header (vedi commit precedente).
+- `toplist-card.js` non ha più bisogno di sapere nulla sugli annunci: si
+  limita a leggere gli attributi `data-*` già stampati da Blade (vedi
+  contratto HTML), quindi non richiede nessuna modifica quando la fonte
+  dati reale sostituisce quella finta.
 
-## Componente riscritto come plugin jQuery ($.fn.toplistCard)
+## Componente riscritto come plugin jQuery leggero ($.fn.toplistCard)
 
-Su richiesta del senior, stesso trattamento già fatto per lo slider
+Su richiesta del cliente, stesso trattamento già fatto per lo slider
 vetrine (vedi il README di quel componente per il file di riferimento
-fornito dal senior stesso e i 3 problemi corretti in review): il
-componente è ora un vero plugin jQuery, per poter montare più liste
-TopList sulla stessa pagina — es. "TopList Roma" e "TopList Milano" in
-due sezioni diverse — ciascuna con la propria sorgente dati.
+fornito dal senior e i 3 problemi corretti in review) ma alleggerito
+ulteriormente: il plugin non costruisce più nessun HTML (vedi sopra), si
+limita ad agganciare l'interattività — così può essere montato su
+**qualunque** markup che rispetti il contratto HTML, anche più liste
+TopList sulla stessa pagina (es. "TopList Roma" e "TopList Milano" in due
+sezioni diverse), ciascuna già stampata da Blade con i propri dati.
 
 ```js
-// Inizializzazione
-$("#toplistList").toplistCard({
-  fetchListings: fetchListings // funzione () => Array<listing> — o una Promise/jqXHR
-});
+// Inizializzazione — nessuna opzione da passare, il markup è già pronto
+$("#toplistList").toplistCard();
 
-// Ricarica la lista con dati aggiornati (es. cambio filtro/categoria)
-$("#toplistList").toplistCard("refresh");
-
-// Distruzione (rimuove le card e gli event handler di questa istanza)
+// Distruzione (rimuove SOLO gli event handler di questa istanza)
 $("#toplistList").toplistCard("destroy");
 ```
 
@@ -459,15 +533,16 @@ nessun markup preesistente, ed è stato rimosso da `index.html`.
 
 - Il markup di `index.html` dentro `#toplistList` può diventare un Blade
   component (`<x-toplist-card :annuncio="$annuncio" />`), passando
-  l'annuncio reale al posto dei dati finti restituiti da `fetchListings()`.
+  l'annuncio reale al posto dei dati scritti a mano in questo POC — vedi
+  "Card TopList: HTML statico + plugin jQuery leggero" più sopra per il
+  contratto esatto.
 - `stat-detail-modal.js` è indipendente dalla card: può essere incluso e
   riusato ovunque nel sito serva lo stesso tipo di lista dettaglio, non
   solo dalla card TopList.
-- Le foto placeholder andranno sostituite con le foto reali: basta
-  sostituire `.toplist-card__photo-placeholder` con un carosello di `<img>`
-  veri quando gli URL sono disponibili — la logica JS del contatore/frecce
-  non cambia, va solo estesa per cambiare anche l'immagine mostrata (oggi
-  cambia solo il numero, non essendoci foto reali da mostrare).
+- Le foto sono già gestite tramite `data-images` con URL reali (vedi
+  "Carosello foto — lazy load" più sotto): basta che Blade stampi lì gli
+  URL veri delle foto caricate dall'inserzionista, nessun'altra modifica
+  richiesta al plugin.
 - Nessuna dipendenza oltre jQuery: entrambi i file JS possono essere
   inclusi così come sono in `public/js/`.
 
@@ -502,16 +577,18 @@ riserva solo per le larghezze più strette (tablet/mobile).
 
 ## Card mobile — template a parte, non un adattamento del desktop (Figma node 691:927)
 
-Sotto i 768px la card non è più una versione compressa di quella desktop:
-è un **secondo template HTML**, generato da `buildMobileCardHtml()` in
-`toplist-card.js` per ogni annuncio, in parallelo al template desktop
-(`buildDesktopCardHtml()`). I due template stanno entrambi nel DOM dentro
-lo stesso contenitore (`.toplist-card-container[data-listing-id]`); CSS
-mostra l'uno o l'altro in base alla larghezza (`.toplist-card` nascosta
-sotto 768px, `.toplist-card-mobile` nascosta sopra) — nessun ricalcolo
-lato JS al resize. Riferimento: node Figma `691:927` (frame iPhone SE
-390px, card 360px) — le due versioni precedenti (`333:2882`/`596:12483`)
-erano frame più vecchi, sostituiti da questo.
+Sotto i 991px (vedi soglia tablet più sotto) la card non è più una
+versione compressa di quella desktop: è un **secondo template HTML**,
+stampato da Blade per ogni annuncio in parallelo al template desktop
+(entrambi scritti staticamente nel markup, non più generati da JS — vedi
+"Card TopList: HTML statico + plugin jQuery leggero" più sopra). I due
+template stanno entrambi nel DOM dentro lo stesso contenitore
+(`.toplist-card-container[data-listing-id]`); CSS mostra l'uno o l'altro
+in base alla larghezza (`.toplist-card` nascosta sotto la soglia,
+`.toplist-card-mobile` nascosta sopra) — nessun ricalcolo lato JS al
+resize. Riferimento: node Figma `691:927` (frame iPhone SE 390px, card
+360px) — le due versioni precedenti (`333:2882`/`596:12483`) erano frame
+più vecchi, sostituiti da questo.
 
 **Le regole restano identiche tra i due template**: stessi flag letti
 (`isOnlineOra`, `isDisponibileSubito`, `isRispondoSubito`, `isToplist`,
@@ -654,7 +731,10 @@ magari non vede mai (tipo quello che in giro si chiama "lazy load").
 
 Implementato **dentro `toplist-card.js`** (non come plugin `$.fn`
 separato: qui la logica riguarda solo come questo componente carica le
-sue immagini, non è un carosello generico riusabile da altri componenti):
+sue immagini, non è un carosello generico riusabile da altri componenti).
+Gli URL delle foto arrivano dall'attributo `data-images` (JSON array)
+stampato da Blade su `.toplist-card__media` — il plugin li legge con
+`$media.data("images")`, nessun array JS a parte da mantenere allineato:
 
 - **Solo 2 foto per volta in memoria**: quella mostrata ("corrente") e la
   successiva, precaricata in background — le altre restano pigre finché
@@ -674,11 +754,11 @@ sue immagini, non è un carosello generico riusabile da altri componenti):
   contatore "N/tot", aggiorna anche il `src` dell'`<img>` e precarica la
   foto successiva — nessuna duplicazione tra i due template.
 
-**Dati finti**: `MOCK_LISTINGS` ora usa `buildPlaceholderPhotos()` per
-generare un'immagine data-URI diversa per ogni foto (colore + numero,
-es. "Foto 3"), invece di oggetti vuoti `{id}` — serve a verificare a
+**Dati finti**: `img/mock/photo-1.svg`…`photo-8.svg` sono 8 immagini SVG
+locali (colore + numero, es. "Foto 3"), referenziate a rotazione negli
+attributi `data-images` delle card di prova — servono a verificare a
 occhio che il lazy load carichi davvero la foto giusta al momento giusto,
 restando 100% offline (nessun CDN esterno tipo picsum.photos, coerente
-col vincolo di progetto). In produzione `photos[].url` sarà il vero URL
-della foto caricata dall'inserzionista — nessun'altra modifica richiesta,
+col vincolo di progetto). In produzione `data-images` conterrà i veri URL
+delle foto caricate dall'inserzionista — nessun'altra modifica richiesta,
 il meccanismo di lazy load funziona con qualunque URL reale.

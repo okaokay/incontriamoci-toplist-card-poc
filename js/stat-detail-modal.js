@@ -62,68 +62,89 @@
     return false;
   }
 
-  /* --------------------------------------------------------------------
-     0) BACKEND SIMULATO
-     In produzione ognuna di queste liste arriverà da un endpoint dedicato
-     (o da un unico endpoint parametrico, es. GET /api/annunci/:id/stats/
-     :tipo — da concordare col senior, vedi README). Qui i dati sono quelli
-     ESATTI mostrati nel mockup Figma (stessi nomi/città/date), non dati
-     inventati a caso: così il confronto visivo con Figma resta affidabile.
+  function pad2(n) {
+    return (n < 10 ? "0" : "") + n;
+  }
 
-     A differenza dello slider vetrine, qui NON serve caricamento a batch:
-     l'utente apre la modale volontariamente (non è uno scroll passivo), e
-     su richiesta esplicita del cliente le righe vengono caricate tutte in
-     un colpo solo. Se in futuro alcuni annunci avessero centinaia di
-     interazioni, si potrà aggiungere paginazione qui dentro senza
-     toccare la card (è un componente separato) — per ora la funzione
-     fetchStatRows() è già isolata apposta, pronta a diventare paginata
-     senza cambiare la sua firma esterna.
-     -------------------------------------------------------------------- */
+  /* --------------------------------------------------------------------
+     0) BACKEND SIMULATO — CON PAGINAZIONE
+     In produzione ognuna di queste liste arriverà da un endpoint dedicato
+     (o da un unico endpoint parametrico — da concordare col senior, vedi
+     README), con la stessa forma {totalItems, anonymousCount, items} già
+     usata qui.
+
+     Su richiesta del cliente le righe NON si caricano più tutte insieme
+     al primo apertura della modale (scelta precedente, ribaltata da
+     questa): ora c'è un vero infinite scroll paginato, vedi
+     "fetchStatRowsPage()"/"calculateTotalPages()" e "PAGINAZIONE E
+     INFINITE SCROLL" più sotto. Per poterlo testare davvero (con solo
+     3-5 righe non si vede nulla scrollare) i dati finti qui sotto sono
+     generati in quantità realistica da "generateMockRows()", non scritti
+     a mano uno per uno come nella versione precedente — le prime righe
+     di ogni tipo restano ESATTAMENTE quelle del mockup Figma (stessi
+     nomi/città/valori), le successive sono sintetiche ma con lo stesso
+     formato, per riempire più pagine in modo credibile. */
+  var MOCK_FIRST_NAMES = ["Chiara", "Davide", "Federica", "Paolo", "Irene", "Valentina", "Gianluca", "Elena", "Matteo", "Anna", "Carlo", "Stefania", "Marco", "Sofia", "Luca", "Nadia", "Andrea", "Giulia", "Roberto", "Tommaso", "Francesca", "Simone", "Alessia", "Fabio", "Martina", "Riccardo", "Giorgia", "Giorgio", "Laura", "Michele"];
+  var MOCK_CITIES = ["Firenze", "Torino", "Venezia", "Bari", "Palermo", "Roma", "Napoli", "Milano", "Bologna", "Genova", "Catania", "Pescara", "Verona", "Padova", "Bergamo", "Trieste", "Cagliari", "Perugia", "Modena", "Parma"];
+
+  /* Genera "count" righe finte con nome/città che ciclano sugli array
+     sopra e una data che retrocede di qualche giorno a riga (sempre nel
+     formato "gg/mm/aaaa" usato in tutto il componente). "rowBuilder"
+     riceve (name, city, date, index) e decide il resto dei campi
+     (value/rating/text), diverso per ogni tipo di modale. */
+  function generateMockRows(count, rowBuilder) {
+    var rows = [];
+    var baseDate = new Date(2025, 2, 20); // 20/03/2025, stessa data più recente del mockup originale
+    for (var i = 0; i < count; i++) {
+      var name = MOCK_FIRST_NAMES[i % MOCK_FIRST_NAMES.length];
+      var city = MOCK_CITIES[i % MOCK_CITIES.length];
+      var d = new Date(baseDate.getTime() - i * 3 * 24 * 60 * 60 * 1000);
+      var date = pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + "/" + d.getFullYear();
+      rows.push(rowBuilder(name, city, date, i));
+    }
+    return rows;
+  }
+
+  var REACTION_VALUES_CYCLE = ["🖤", "😍", "🔥", "😐"];
+  var REVIEW_TEXTS_CYCLE = [
+    "Esperienza fantastica, molto professionale!",
+    "Molto gentile e disponibile, assolutamente consigliata.",
+    "Ottima esperienza, tornerò sicuramente.",
+    "Una persona meravigliosa, super raccomandata!",
+    "Puntuale e cortese, tutto perfetto."
+  ];
+  var DONATION_AMOUNTS_CYCLE = ["10", "20", "30", "50", "100"];
+
   var MOCK_STAT_ROWS = {
     reactions: {
       anonymousCount: 1,
-      rows: [
-        { name: "Chiara",   city: "Firenze", value: "🖤", date: "19/03/2025" }, /* 🖤 */
-        { name: "Davide",   city: "Torino",  value: "😍", date: "14/03/2025" }, /* 😍 */
-        { name: "Federica", city: "Venezia", value: "🔥", date: "09/03/2025" }, /* 🔥 */
-        { name: "Paolo",    city: "Bari",    value: "🖤", date: "04/03/2025" }, /* 🖤 */
-        { name: "Irene",    city: "Palermo", value: "😐", date: "25/02/2025" }  /* 😐 */
-      ]
+      rows: generateMockRows(38, function (name, city, date, i) {
+        return { name: name, city: city, value: REACTION_VALUES_CYCLE[i % REACTION_VALUES_CYCLE.length], date: date };
+      })
     },
     followers: {
       anonymousCount: 2,
-      rows: [
-        { name: "Valentina", city: "Roma",    date: "18/03/2025" },
-        { name: "Gianluca",  city: "Napoli",  date: "10/03/2025" },
-        { name: "Elena",     city: "Milano",  date: "02/03/2025" },
-        { name: "Matteo",    city: "Bologna", date: "22/02/2025" }
-      ]
+      rows: generateMockRows(42, function (name, city, date) {
+        return { name: name, city: city, date: date };
+      })
     },
     saved: {
       anonymousCount: 1,
-      rows: [
-        { name: "Anna",      city: "Genova",  date: "17/03/2025" },
-        { name: "Carlo",     city: "Roma",    date: "11/03/2025" },
-        { name: "Stefania",  city: "Catania", date: "05/03/2025" }
-      ]
+      rows: generateMockRows(24, function (name, city, date) {
+        return { name: name, city: city, date: date };
+      })
     },
     reviews: {
       anonymousCount: 2,
-      rows: [
-        { name: "Marco", city: "Pescara", rating: 5, text: "Esperienza fantastica, molto professionale!", date: "12/03/2025" },
-        { name: "Sofia", city: "Roma",    rating: 5, text: "Molto gentile e disponibile, assolutamente consigliata.", date: "08/02/2025" },
-        { name: "Luca",  city: "Milano",  rating: 4, text: "Ottima esperienza, tornerò sicuramente.", date: "15/01/2025" },
-        { name: "Nadia", city: "Verona",  rating: 5, text: "Una persona meravigliosa, super raccomandata!", date: "03/01/2025" }
-      ]
+      rows: generateMockRows(22, function (name, city, date, i) {
+        return { name: name, city: city, rating: 4 + (i % 2), text: REVIEW_TEXTS_CYCLE[i % REVIEW_TEXTS_CYCLE.length], date: date };
+      })
     },
     donations: {
       anonymousCount: 0, /* le donazioni non supportano l'anonimato in questo mockup (vedi docx, sezione 7.1.5) */
-      rows: [
-        { name: "Andrea",  city: "Torino",  value: "50",  date: "20/03/2025" },
-        { name: "Giulia",  city: "Napoli",  value: "30",  date: "05/02/2025" },
-        { name: "Roberto", city: "Firenze", value: "20",  date: "28/01/2025" },
-        { name: "Tommaso", city: "Roma",    value: "100", date: "14/01/2025" }
-      ]
+      rows: generateMockRows(30, function (name, city, date, i) {
+        return { name: name, city: city, value: DONATION_AMOUNTS_CYCLE[i % DONATION_AMOUNTS_CYCLE.length], date: date };
+      })
     }
   };
 
@@ -139,22 +160,51 @@
     donations: "/api/annunci/:id/donazioni"
   };
 
-  /* Simula la chiamata di rete: sincrona qui (nessun setTimeout), stessa
-     scelta già fatta per lo slider vetrine.
-     "listingId" arriva da toplist-card.js (letto da "data-listing-id"
-     sulla card cliccata) — in questo POC lo riceviamo ma lo ignoriamo (i
-     dati finti sono uguali per ogni annuncio), ma la firma della
-     funzione è già quella giusta per la produzione:
+  /* --------------------------------------------------------------------
+     PAGINAZIONE E INFINITE SCROLL (richiesta del cliente)
+     Prima le righe di ogni modale si caricavano tutte insieme alla prima
+     apertura (scelta esplicita precedente, ribaltata da questa nuova
+     richiesta): ora la modale carica solo la PRIMA pagina, poi ne
+     carica altre via infinite scroll man mano che l'utente arriva in
+     fondo alla lista — stesso identico pattern "batch loading" già
+     usato in vetrineSlider (loadNextBatch/ensureLoaded), qui applicato
+     alle righe delle modali invece che alle card.
 
-         function fetchStatRows(type, listingId) {
-           return $.get(STAT_FETCH_ENDPOINTS[type].replace(":id", listingId));
+     "fetchStatRowsPage(type, listingId, offset, limit)" restituisce
+     {totalItems, anonymousCount, items} — "totalItems" e "limit"
+     (= itemsPerPage) sono gli unici due numeri che servono a
+     "calculateTotalPages()" per sapere quante pagine ci sono in totale,
+     nessun altro calcolo manuale nel resto del file. In produzione:
+
+         function fetchStatRowsPage(type, listingId, offset, limit) {
+           return $.get(STAT_FETCH_ENDPOINTS[type].replace(":id", listingId), {
+             offset: offset,
+             limit: limit
+           });
          }
 
-     cioè la stessa identica interfaccia, solo con una vera chiamata AJAX
-     al posto della tabella in memoria — la risposta attesa è
-     {anonymousCount, rows: [...]}, vedi README per il contratto completo. */
-  function fetchStatRows(type, listingId) {
-    return MOCK_STAT_ROWS[type] || { anonymousCount: 0, rows: [] };
+     stessa identica interfaccia, solo con una vera chiamata AJAX al
+     posto della tabella in memoria — vedi README per il contratto
+     completo della risposta attesa. */
+  function fetchStatRowsPage(type, listingId, offset, limit) {
+    var data = MOCK_STAT_ROWS[type];
+    if (!data) {
+      return { totalItems: 0, anonymousCount: 0, items: [] };
+    }
+    return {
+      totalItems: data.rows.length,
+      anonymousCount: data.anonymousCount,
+      items: data.rows.slice(offset, offset + limit)
+    };
+  }
+
+  /* Calcola quante pagine servono per mostrare "totalItems" righe,
+     "itemsPerPage" alla volta — usata da openModal per sapere quando
+     l'infinite scroll ha raggiunto l'ultima pagina e deve fermarsi
+     (currentPage >= totalPages, vedi loadNextPageIfNearBottom dentro
+     openModal). */
+  function calculateTotalPages(totalItems, itemsPerPage) {
+    return Math.ceil(totalItems / itemsPerPage);
   }
 
   /* Endpoint proposti per le AZIONI (POST) che le CTA di ogni modale
@@ -340,12 +390,9 @@
     );
   }
 
-  function pad2(n) {
-    return (n < 10 ? "0" : "") + n;
-  }
-
   /* Data odierna nello stesso formato "gg/mm/aaaa" dei dati finti (punto
-     0), per le righe aggiunte dalle azioni dell'utente. */
+     0, "pad2" già definito lì), per le righe aggiunte dalle azioni
+     dell'utente. */
   function formatTodayDate() {
     var d = new Date();
     return pad2(d.getDate()) + "/" + pad2(d.getMonth() + 1) + "/" + d.getFullYear();
@@ -512,27 +559,50 @@
      per comodità di test manuale in console — nell'uso reale dalla card
      (toplist-card.js) viene sempre passato.
      -------------------------------------------------------------------- */
+  /* Quante righe per pagina: usata sia per la prima pagina (caricata
+     all'apertura) sia per ogni pagina successiva caricata dall'infinite
+     scroll. Valore ragionevole per una lista di sole righe di testo
+     dentro un overlay (più piccolo delle 10 card dello slider vetrine,
+     che occupano molto più spazio a schermo ciascuna). */
+  var ITEMS_PER_PAGE = 15;
+
+  /* Quanti px mancano al fondo dello scroll prima di anticipare il
+     caricamento della pagina successiva — così la nuova pagina è già
+     pronta quando l'utente arriva davvero in fondo, invece di fargli
+     vedere lo spinner e aspettare. */
+  var SCROLL_LOAD_THRESHOLD_PX = 80;
+
   function openModal(type, listingId) {
     var config = MODAL_TYPES[type];
     if (!config) {
       return; /* tipo sconosciuto: nessuna modale da aprire (difesa, non dovrebbe mai succedere) */
     }
 
-    var data = fetchStatRows(type, listingId);
+    /* Solo la PRIMA pagina viene caricata all'apertura (vedi
+       "PAGINAZIONE E INFINITE SCROLL" più sopra) — le successive
+       arrivano scrollando, vedi il binding "scroll" più sotto.
+       "totalPages" (da "calculateTotalPages") è il criterio di stop
+       dell'infinite scroll: quando "currentPage" lo raggiunge, non c'è
+       più nulla da caricare. */
+    var firstPage = fetchStatRowsPage(type, listingId, 0, ITEMS_PER_PAGE);
+    var totalItems = firstPage.totalItems;
+    var totalPages = calculateTotalPages(totalItems, ITEMS_PER_PAGE);
+    var currentPage = totalItems > 0 ? 1 : 0; // pagina 1 (0-based: la prima) già caricata sopra
+    var isLoadingNextPage = false;
 
     var chipHtml = "";
     if (config.hasAnonymousChip || config.showReactionPicker) {
       chipHtml =
         '<div class="stat-modal__anonymous-bar">' +
           (config.hasAnonymousChip
-            ? '<span class="stat-modal__anonymous-chip">Utenti anonimi ' + data.anonymousCount + " " + config.icon + "</span>"
+            ? '<span class="stat-modal__anonymous-chip">Utenti anonimi ' + firstPage.anonymousCount + " " + config.icon + "</span>"
             : "<span></span>" /* placeholder vuoto: mantiene il picker allineato a destra anche senza chip */) +
           (config.showReactionPicker ? buildReactionPickerHtml() : "") +
         "</div>";
     }
 
     var rowsHtml = "";
-    $.each(data.rows, function (index, row) {
+    $.each(firstPage.items, function (index, row) {
       rowsHtml += buildRowHtml(row, config.rowType);
     });
 
@@ -579,7 +649,15 @@
           "</div>" +
           chipHtml +
           reviewFormHtml +
-          '<div class="stat-modal__rows">' + rowsHtml + "</div>" +
+          '<div class="stat-modal__rows">' +
+            rowsHtml +
+            /* Indicatore "Caricamento…" SEMPRE presente come ultimo
+               figlio di ".stat-modal__rows" (nascosto di default): le
+               pagine successive si inseriscono sempre appena PRIMA di
+               questo elemento (vedi ".before()" più sotto), così resta
+               sempre l'ultima cosa visibile mentre carica. */
+            '<div class="stat-modal__loading-more" hidden>Caricamento…</div>' +
+          "</div>" +
           '<div class="stat-modal__footer">' +
             actionButtonHtml +
             '<button type="button" class="stat-modal__close-button">✕ Chiudi</button>' +
@@ -632,6 +710,46 @@
     $overlay.find(".stat-modal__close-icon, .stat-modal__close-button").on("click", closeModal);
 
     bindActionEvents($overlay, type, listingId, config);
+
+    /* --------------------------------------------------------------------
+       INFINITE SCROLL — carica la pagina successiva quando l'utente si
+       avvicina al fondo della lista (già scrollabile via CSS,
+       "overflow-y:auto" su ".stat-modal__rows"). Stesso pattern
+       "$.when()" usato ovunque nel progetto: oggi "fetchStatRowsPage"
+       risolve subito (dati in memoria), in produzione la stessa riga
+       funzionerà senza modifiche con una vera Promise/jqXHR asincrona.
+       -------------------------------------------------------------------- */
+    var $rowsContainer = $overlay.find(".stat-modal__rows");
+    var $loadingIndicator = $overlay.find(".stat-modal__loading-more");
+
+    function loadNextPageIfNearBottom() {
+      if (isLoadingNextPage || currentPage >= totalPages) {
+        return; // sta già caricando, oppure non c'è più nulla da caricare (ultima pagina raggiunta)
+      }
+      var el = $rowsContainer[0];
+      var distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+      if (distanceFromBottom > SCROLL_LOAD_THRESHOLD_PX) {
+        return; // ancora lontano dal fondo, niente da fare
+      }
+
+      isLoadingNextPage = true;
+      $loadingIndicator.removeAttr("hidden");
+
+      var nextOffset = currentPage * ITEMS_PER_PAGE;
+      $.when(fetchStatRowsPage(type, listingId, nextOffset, ITEMS_PER_PAGE)).done(function (page) {
+        var pageHtml = "";
+        $.each(page.items, function (index, row) {
+          pageHtml += buildRowHtml(row, config.rowType);
+        });
+        $loadingIndicator.before(pageHtml);
+
+        currentPage += 1;
+        isLoadingNextPage = false;
+        $loadingIndicator.attr("hidden", true);
+      });
+    }
+
+    $rowsContainer.on("scroll", loadNextPageIfNearBottom);
 
     /* Chiusura anche con il tasto ESC, comportamento atteso per qualunque
        modale. Namespace ".statDetailModal" sull'evento così possiamo
