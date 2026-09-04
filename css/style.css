@@ -477,16 +477,27 @@
 
 /* ============================================================================
    3) RESPONSIVE — card desktop vs card mobile
-   Sotto i 768px il layout non è più una versione "compressa" della card
-   desktop: è un template HTML del tutto diverso (vedi buildMobileCardHtml
-   in toplist-card.js, Figma node 691:927 — iPhone SE 390px, card 360px),
-   generato in parallelo alla card desktop per ogni annuncio e mostrato/
-   nascosto qui in base alla larghezza. Le regole sotto sono quindi solo
-   show/hide, non un adattamento del markup desktop.
+   Sotto i 992px (tablet INCLUSO, non solo telefono) il layout non è più
+   una versione "compressa" della card desktop: è un template HTML del
+   tutto diverso (vedi buildMobileCardHtml in toplist-card.js, Figma node
+   691:927 — iPhone SE 390px, card 360px), generato in parallelo alla
+   card desktop per ogni annuncio e mostrato/nascosto qui in base alla
+   larghezza. Le regole sotto sono quindi solo show/hide, non un
+   adattamento del markup desktop.
+
+   PERCHÉ 992px E NON 768px: su richiesta esplicita del cliente, la
+   versione TABLET deve essere IDENTICA alla versione mobile (non una via
+   di mezzo). 992px è la soglia standard del breakpoint "tablet" di
+   Bootstrap 3 (dove inizia ".col-md-*"): sotto quella soglia — quindi
+   anche nel range tipico tablet 768-991px — si mostra il template
+   mobile, non quello desktop. Se in futuro serve un layout tablet
+   diverso sia dal mobile sia dal desktop, si può aggiungere una fascia
+   intermedia qui, ma oggi non è richiesto.
    ============================================================================ */
 /* ---- 3.1) Contenitore card mobile (Figma node 691:927) -----------------
-   "display:none" di default (visibile SOLO sotto i 768px, vedi la media
-   query più sotto): ATTENZIONE, questa è l'UNICA dichiarazione "display"
+   "display:none" di default (visibile SOLO sotto i 992px, tablet incluso
+   — vedi la media query più sotto): ATTENZIONE, questa è l'UNICA
+   dichiarazione "display"
    per ".toplist-card-mobile" nel file — un secondo blocco di regole per
    lo stesso selettore che ridichiara "display" (es. "flex" per il layout
    interno) vincerebbe in cascata su questo "none" e mostrerebbe la card
@@ -521,7 +532,7 @@
   padding: 16px;
   margin-top: 14px; /* spazio per i badge flottanti (top:-14px) senza tagliarli */
 }
-@media (max-width: 767px) {
+@media (max-width: 991px) {
   .toplist-card {
     display: none;
   }
@@ -931,17 +942,35 @@
   gap: 8px;
 }
 
+/* Sono <button>, non più semplici <span> informativi (vedi
+   bindActionEvents in stat-detail-modal.js): reset dei default del
+   browser (padding/font) + stato ".is-selected" per l'ultima reazione
+   scelta in questa sessione della modale. */
 .stat-modal__reaction-picker-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 26px;
   height: 26px;
+  padding: 0;
+  font: inherit;
   border-radius: 50%;
   background: #fff;
   border: 1px solid var(--modal-header-border);
   color: var(--modal-chip-text);
-  cursor: default; /* qui è solo informativo (mostra cosa si PUÒ scegliere), non un vero picker interattivo */
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.stat-modal__reaction-picker-icon:hover {
+  background: var(--modal-chip-bg);
+}
+
+.stat-modal__reaction-picker-icon.is-selected {
+  background: var(--modal-accent);
+  border-color: var(--modal-accent);
+  color: #fff;
+  transform: scale(1.1);
 }
 
 /* Elenco righe: SCORREVOLE (max-height + overflow-y), non "clip" come nel
@@ -960,6 +989,13 @@
   gap: 12px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--modal-row-border);
+}
+
+/* Riga aggiunta dall'azione dell'utente loggato (segui/reazione/
+   preferito/recensione/donazione, vedi bindActionEvents): sfondo rosa
+   tenue per farla notare, dato che compare sempre in cima alla lista. */
+.stat-modal__row--own {
+  background: var(--modal-header-bg);
 }
 
 .stat-modal__avatar {
@@ -1049,6 +1085,9 @@
 }
 
 .stat-modal__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px 20px;
   background: var(--modal-header-bg);
   border-top: 1px solid var(--modal-header-border);
@@ -1070,6 +1109,98 @@
 
 .stat-modal__close-button:hover {
   background: #fafafa;
+}
+
+/* CTA dinamica del footer (Segui/Aggiungi ai preferiti/Scrivi una
+   recensione/Fai una donazione — vedi bindActionEvents in
+   stat-detail-modal.js), sopra il pulsante "Chiudi": pieno rosa,
+   distinto dal "Chiudi" (contorno) per essere l'azione primaria. */
+.stat-modal__action-button {
+  display: block;
+  width: 100%;
+  padding: 11px;
+  background: var(--modal-accent);
+  border: 1px solid var(--modal-accent);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+.stat-modal__action-button:hover {
+  filter: brightness(0.96);
+}
+
+/* Stato "attivo" dei toggle (Segui già / Nei preferiti): contorno invece
+   di pieno, per distinguere visivamente "azione fatta" da "azione da
+   fare" senza bisogno di cambiare solo il testo. */
+.stat-modal__action-button.is-active {
+  background: #fff;
+  color: var(--modal-accent);
+}
+
+/* ---- Form inline "Scrivi una recensione" ---------------------------- */
+.stat-modal__review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--modal-row-border);
+  background: var(--modal-header-bg);
+}
+
+.stat-modal__review-form-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.stat-modal__review-form-star {
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: #f5b301;
+  cursor: pointer;
+}
+
+.stat-modal__review-form-text {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--modal-header-border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 13px;
+  color: #333;
+  resize: vertical;
+}
+
+.stat-modal__review-form-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.stat-modal__review-form-cancel,
+.stat-modal__review-form-submit {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.stat-modal__review-form-cancel {
+  background: #fff;
+  border: 1px solid var(--modal-header-border);
+  color: #666;
+}
+
+.stat-modal__review-form-submit {
+  background: var(--modal-accent);
+  border: 1px solid var(--modal-accent);
+  color: #fff;
 }
 
 @media (max-width: 480px) {

@@ -310,6 +310,82 @@ Questa è probabilmente la domanda più importante da chiudere prima di
 integrare davvero le modali — vedi anche i punti 1-3 di "Domande per il
 senior" qui sotto, che dipendono direttamente da questa decisione.
 
+## Modali dinamiche: azioni utente + predisposizione endpoint (richiesta del senior)
+
+Le 5 modali non sono più solo di lettura: ognuna ha una **CTA dinamica**
+che dipende dal proprio tipo, e le icone della modale Reazioni sono
+diventate davvero cliccabili (prima erano solo informative).
+
+**Convenzione di login** — questo file JS non può sapere da solo se
+l'utente è loggato (nessuna sessione lato client): la pagina Blade che lo
+include deve valorizzare `window.IncontriamociUser` PRIMA di caricare
+`stat-detail-modal.js`, tipicamente così:
+
+```html
+<script>
+  window.IncontriamociUser = {
+    isLoggedIn: @json(auth()->check()),
+    id: @json(auth()->id()),
+    name: @json(auth()->user()->name ?? null)
+  };
+</script>
+```
+
+Se questo oggetto manca (pagina di test, script fuori contesto), il
+default è "non loggato" — scelta sicura, non esegue mai un'azione a nome
+di nessuno per errore. Ogni CTA passa prima da `requireLoginOrRedirect()`:
+se non loggato, redirect a `https://incontriamoci.xxx/user/login` e
+l'azione si ferma lì (nessuna chiamata, nessun aggiornamento visivo).
+
+**CTA per tipo di modale** (`config.action` in `MODAL_TYPES`):
+
+| Modale | CTA | Comportamento |
+|---|---|---|
+| Reazioni | le 4 icone del picker (già esistenti) | click = aggiunge la reazione, non serve un pulsante extra nel footer |
+| Follower | "Segui" / "Segui già" | toggle on/off |
+| Preferiti | "Aggiungi ai preferiti" / "Nei preferiti" | toggle on/off |
+| Recensioni | "Scrivi una recensione" | apre un mini-form inline (stelle + testo), poi "Invia recensione" |
+| Donazioni | "Fai una donazione" | oggi un `prompt()` per l'importo — **placeholder**, in produzione un vero flusso di pagamento (Stripe/PayPal/ecc.), fuori scope per un componente di sola UI |
+
+Ad azione riuscita, la riga con i dati dell'utente loggato viene aggiunta
+**in cima alla lista subito** (aggiornamento ottimistico, evidenziata con
+uno sfondo tenue), senza dover ricaricare la modale.
+
+**Endpoint predisposti** (GET per leggere, POST per le azioni — da
+confermare col senior, non ancora implementate come vere chiamate di
+rete in questo POC offline):
+
+```
+GET  /api/annunci/{id}/followers   POST /api/annunci/{id}/follow
+GET  /api/annunci/{id}/reazioni    POST /api/annunci/{id}/reazioni      { tipo }
+GET  /api/annunci/{id}/preferiti   POST /api/annunci/{id}/preferiti
+GET  /api/annunci/{id}/recensioni  POST /api/annunci/{id}/recensioni    { valutazione, testo }
+GET  /api/annunci/{id}/donazioni   POST /api/annunci/{id}/donazioni     { importo }
+```
+
+`postStatAction(type, listingId, payload)` in `stat-detail-modal.js` è il
+punto isolato da collegare (stesso pattern già usato per `fetchStatRows`/
+`fetchListings`/`fetchVetrinePage`): oggi ritorna `{ok:true}` sincrono,
+in produzione una vera `$.ajax` — il resto del codice usa già
+`$.when(postStatAction(...))`, quindi non richiede nessuna modifica
+quando diventerà una vera Promise.
+
+**Aggancio pronto per il futuro**: ogni azione riuscita emette anche un
+evento `$(document).trigger("incontriamoci:statAction", [...])` con
+`type`/`listingId` e il dettaglio dell'azione — nessun listener collegato
+ancora in questo POC, ma è già pronto per quando servirà aggiornare in
+tempo reale anche il numero mostrato sulla card TopList (fuori dalla
+modale), senza dover ricaricare la pagina.
+
+## Card mobile mostrata anche su tablet (non solo su telefono)
+
+Su richiesta esplicita del cliente, la versione **tablet deve essere
+identica alla versione mobile**, non una via di mezzo col desktop: la
+soglia sotto cui compare `.toplist-card-mobile` (e si nasconde
+`.toplist-card`) è stata alzata da 767px a **991px** — la soglia
+standard del breakpoint "tablet" di Bootstrap 3 (dove inizia
+`.col-md-*`). Sopra i 991px si vede sempre e solo il template desktop.
+
 ## Come i dati degli annunci arrivano alla card — il punto di aggancio
 
 Stessa logica già usata per lo slider vetrine e per le modali di questo
