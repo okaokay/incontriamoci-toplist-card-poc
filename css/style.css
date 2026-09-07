@@ -469,24 +469,45 @@
   text-decoration: none;
 }
 
-/* Pulsante Chiama: stesso trattamento "chip rosa" di nome inserzionista e
-   badge TOPLIST. Valori ESATTI dal node Figma 409:4560: sfondo #fe9bdd,
-   bordo 1px #77767b, radius 2px, testo regular (non bold) — la versione
-   precedente (bordo nero 2px, radius 8px, testo bold) era basata solo su
-   uno screenshot, questi sono i valori confermati dal file Figma. */
-.toplist-card__contact-button--call {
-  background: #fe9bdd;
-  border: 1px solid #77767b;
-  color: #1a1c1c;
+/* Restyling CTA footer desktop (Figma node 711:12218, "Toplist Item 4"):
+   da chip rosa/verde con etichetta testuale a 3 pulsanti icona-soli,
+   monocromi, 48×36px, radius 12px — sostituisce il vecchio trattamento
+   "chip rosa" (nodo 409:4560, versione precedente). Solo desktop: la
+   card mobile mantiene i suoi chip colorati con testo (vedi sezione 3.7,
+   ".toplist-card-mobile__action--*"), che restano invariati per scelta
+   esplicita del cliente per questa modifica. */
+.toplist-card__contact-button--call,
+.toplist-card__contact-button--telegram,
+.toplist-card__contact-button--whatsapp {
+  justify-content: center;
+  width: 48px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
-/* Pulsante WhatsApp: stesso trattamento (verde brand + icona ufficiale)
-   già validato nel componente slider vetrine — coerenza tra i componenti
-   del sito. Sostituisce il generico "Message" del mockup Figma 409:4482. */
-.toplist-card__contact-button--whatsapp {
-  background: #25d366;
-  border-color: #25d366;
+.toplist-card__contact-button--call {
+  background: #1f2937;
   color: #fff;
+}
+
+/* Telegram compare anche su desktop ora (prima era solo mobile, vedi
+   "listing.telegram" in index.html) — resta comunque condizionale: il
+   bottone esiste nel markup solo per gli annunci che hanno collegato un
+   canale Telegram, esattamente come già avveniva su mobile. */
+.toplist-card__contact-button--telegram {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+/* WhatsApp: non più verde brand su desktop (nodo 711:12218 lo mostra
+   monocromo come gli altri due pulsanti) — il verde ufficiale resta solo
+   sulla card mobile, dove il cliente non ha richiesto questa modifica. */
+.toplist-card__contact-button--whatsapp {
+  background: #e5e7eb;
+  color: #1f2937;
 }
 
 /* ============================================================================
