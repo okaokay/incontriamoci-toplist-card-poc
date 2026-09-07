@@ -490,10 +490,10 @@
 }
 
 /* Restyling CTA footer desktop (Figma node 711:12218, "Toplist Item 4"):
-   da chip rosa/verde con etichetta testuale a 3 pulsanti icona-soli,
-   monocromi, 48×36px, radius 12px — sostituisce il vecchio trattamento
-   "chip rosa" (nodo 409:4560, versione precedente). Solo desktop: la
-   card mobile mantiene i suoi chip colorati con testo (vedi sezione 3.7,
+   da chip con etichetta testuale a 3 pulsanti icona-soli colorati,
+   48×36px, radius 12px — sostituisce il vecchio trattamento "chip rosa"
+   (nodo 409:4560, versione precedente). Solo desktop: la card mobile
+   mantiene i suoi chip colorati con testo (vedi sezione 3.7,
    ".toplist-card-mobile__action--*"), che restano invariati per scelta
    esplicita del cliente per questa modifica. */
 .toplist-card__contact-button--call,
@@ -508,9 +508,12 @@
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
 }
 
+/* Colori ESATTI presi dal node Figma 714:12577 (il gruppo dei 3 pulsanti
+   isolato, con i colori pieni — 711:12218 mostrava la stessa card ma
+   con un rendering monocromo/placeholder, non i colori definitivi). */
 .toplist-card__contact-button--call {
-  background: #1f2937;
-  color: #fff;
+  background: #fe9bdd;
+  color: #000;
 }
 
 /* Telegram compare anche su desktop ora (prima era solo mobile, vedi
@@ -518,16 +521,15 @@
    bottone esiste nel markup solo per gli annunci che hanno collegato un
    canale Telegram, esattamente come già avveniva su mobile. */
 .toplist-card__contact-button--telegram {
-  background: #e5e7eb;
-  color: #1f2937;
+  background: #1f2937;
+  color: #fff;
 }
 
-/* WhatsApp: non più verde brand su desktop (nodo 711:12218 lo mostra
-   monocromo come gli altri due pulsanti) — il verde ufficiale resta solo
-   sulla card mobile, dove il cliente non ha richiesto questa modifica. */
+/* WhatsApp: verde brand ufficiale, stesso colore già usato ovunque nel
+   sito (mobile, slider vetrine) — coerenza confermata dal node 714:12577. */
 .toplist-card__contact-button--whatsapp {
-  background: #e5e7eb;
-  color: #1f2937;
+  background: #25d366;
+  color: #fff;
 }
 
 /* ============================================================================
