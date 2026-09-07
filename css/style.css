@@ -290,7 +290,14 @@
   transform: scale(0.9);
 }
 
-/* ---- 2.2) Media (foto + carosello) + corpo (titolo/descrizione) ---------- */
+/* ---- 2.2) Media (foto + carosello) + corpo (titolo/descrizione) ----------
+   Layout aggiornato sul node Figma 711:12218 ("Toplist Item 4"): la foto
+   non è più larga ~36% con un footer a tutta larghezza sotto — è una
+   colonna stretta e alta quanto TUTTA la riga (foto+testo+footer), e
+   titolo/descrizione/footer diventano una SECONDA colonna affiancata,
+   non più impilati sotto la foto. Per questo ".toplist-card__footer" è
+   ora dentro ".toplist-card__content-col", non più un fratello di
+   ".toplist-card__content" a tutta larghezza. */
 .toplist-card__content {
   display: flex;
   align-items: stretch;
@@ -298,11 +305,23 @@
 
 .toplist-card__media {
   position: relative;
-  flex: 0 0 36%;           /* proporzione ~372/1022 del mockup Figma */
-  max-width: 373px;
-  min-height: 256px;
+  flex: 0 0 260px;          /* larghezza fissa, non proporzionale (Figma: "shrink-0", w-260px) */
+  max-width: 260px;
+  min-height: 380px;        /* stessa altezza della colonna testo+footer accanto (Figma: 380px) */
   background: #f3f3f3;
-  border-right: 1px solid #e4e4e7;
+  border: 1px solid #e4e4e7;
+}
+
+/* Colonna a destra della foto: titolo/descrizione in alto, footer in
+   basso, spinti agli estremi da "justify-content:space-between" così il
+   footer resta sempre ancorato al fondo della foto qualunque sia la
+   lunghezza della descrizione — non richiede un'altezza calcolata a mano. */
+.toplist-card__content-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 /* Placeholder foto: stesso pattern "X" diagonale già usato nello slider
@@ -362,9 +381,7 @@
 
 .toplist-card__body {
   display: block;
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 16px;
+  padding: 20px 20px 8px;
   text-decoration: none;
   cursor: pointer;
 }
@@ -384,16 +401,19 @@
   color: var(--toplist-text-muted);
 }
 
-/* ---- 2.3) Footer: statistiche cliccabili + pulsanti Chiama/WhatsApp ----- */
+/* ---- 2.3) Footer: statistiche cliccabili + pulsanti Chiama/Telegram/WhatsApp
+   Non più a tutta larghezza sotto la foto: vive dentro
+   ".toplist-card__content-col" (vedi sezione 2.2), quindi la sua
+   larghezza è quella della colonna testo, non dell'intera card (Figma
+   711:12218, nodo "711:12322"). */
 .toplist-card__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
-  padding: 13px 12px 12px;
-  background: #fff;
-  border-top: 1px solid var(--toplist-border-light);
+  padding: 10px;
+  background: #fffcfc;
 }
 
 .toplist-card__stats {
